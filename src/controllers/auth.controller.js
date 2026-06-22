@@ -8,13 +8,16 @@ import { signToken } from "../middleware/auth.js";
  */
 export async function login(req, res) {
   try {
-    const { userId, password } = req.body;
+    const { userName, password } = req.body;
 
-    if (!userId || !password) {
-      return response.error(res, "userId and password are required", 400);
+    if (!userName || !password) {
+      return response.error(res, "userName and password are required", 400);
     }
 
-    const user = await AuthModel.findActiveUser(userId, password);
+    console.log(userName)
+    const user = await AuthModel.findActiveUser(userName, password);
+
+    console.log("user" , user)
 
     if (!user) {
       return response.error(res, "Invalid Username or Password!", 401);

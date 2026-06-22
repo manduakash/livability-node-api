@@ -12,11 +12,12 @@ import { userMaster } from "../db/schema.js";
  * recommend migrating to bcrypt hashes - see README "Security notes".
  */
 export const AuthModel = {
-  async findActiveUser(userId, password) {
+  async findActiveUser(userName, password) {
+    const encPass = btoa(password);
     const rows = await db
       .select()
       .from(userMaster)
-      .where(and(eq(userMaster.userId, userId), eq(userMaster.password, password)))
+      .where(and(eq(userMaster.userName, userName), eq(userMaster.password, encPass)))
       .limit(1);
 
     const user = rows[0];
