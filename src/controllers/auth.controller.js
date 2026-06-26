@@ -25,7 +25,7 @@ export async function login(req, res) {
     }
 
     const token = signToken({
-      userName: user.userName,
+      userId: user.userId,
       username: user.userName,
       userType: user.userType,
       stateId: user.stateId,
