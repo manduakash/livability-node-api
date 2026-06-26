@@ -15,7 +15,38 @@ export const EcModuleModel = {
 
   async create(data) {
     const id = await this.getNextId();
-    await db.insert(ecModule).values({ id, ...data });
+
+    const currentMonth = new Date().toLocaleString("en-US", {
+      month: "long",
+    }); // e.g. "June"
+
+    await db.insert(ecModule).values({
+      id,
+      realEstateId: data?.realEstateId,
+      session: data?.session || "-",
+      monthOfSubmittion: data?.monthOfSubmittion || currentMonth,
+      videLetterNo: data?.videLetterNo || "-",
+      projectProponent: data?.projectProponent || "-",
+      projectLocation: data?.projectLocation || "-",
+      purposeReport: data?.purposeReport || "-",
+      methodReport: data?.methodReport || "-",
+      abbreviations: data?.abbreviations || "-",
+      projectDetail: data?.projectDetail || "-",
+      consStatus: data?.consStatus || "-",
+      healthOccupation: data?.healthOccupation || "-",
+      locGmap: data?.locGmap || "-",
+      locGsat: data?.locGsat || "-",
+      ecClear: data?.ecClear || "-",
+      waterQua: data?.waterQua || "-",
+      contactPp: data?.contactPp || "-",
+      addPp: data?.addPp || "-",
+      emailP: data?.emailP || "-",
+      telFaxP: data?.telFaxP || "-",
+      envp: data?.envp || "-",
+      uploadEc: data?.uploadEc || "-",
+      sessionKey: data?.sessionKey || "-",
+    });
+
     return id;
   },
 

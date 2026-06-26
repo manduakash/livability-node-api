@@ -288,7 +288,7 @@ export const ecModule = mysqlTable("ec_module", {
   id: int("id").notNull(),
   realEstateId: int("real_estate_id").notNull(),
   session: varchar("session", { length: 255 }).notNull(),
-  monthOfSubmittion: varchar("month_of_submittion", { length: 255 }).notNull(),
+  monthOfSubmittion: varchar("month_of_submittion", { length: 255 }).notNull().default("-"),
   videLetterNo: text("vide_letter_no").notNull(),
   projectProponent: varchar("project_proponent", { length: 255 }).notNull(),
   projectLocation: text("project_location").notNull(),

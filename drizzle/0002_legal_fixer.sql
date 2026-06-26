@@ -1,0 +1,1 @@
+ALTER TABLE `ec_module` MODIFY COLUMN `month_of_submittion` varchar(255) NOT NULL DEFAULT '-';

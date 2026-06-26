@@ -8,7 +8,6 @@
       "when": 1781590112117,
       "tag": "0000_sticky_norman_osborn",
       "breakpoints": true
-<<<<<<< HEAD
     },
     {
       "idx": 1,
@@ -16,8 +15,13 @@
       "when": 1782441055633,
       "tag": "0001_shocking_sharon_carter",
       "breakpoints": true
-=======
->>>>>>> 701d5503cb693d45698b805e862c10540e710f32
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1782446577131,
+      "tag": "0002_legal_fixer",
+      "breakpoints": true
     }
   ]
 }
