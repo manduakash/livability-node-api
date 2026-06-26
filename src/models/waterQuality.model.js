@@ -162,8 +162,7 @@ export const WaterQualityModel = {
       .select()
       .from(waterQuality)
       .where(eq(waterQuality.realEstateId, realEstateId))
-      .groupBy(waterQuality.readingDate)
       .orderBy(desc(waterQuality.readingDate))
       .limit(limit);
-  },
+  }
 };
