@@ -98,10 +98,13 @@ export const StpReadingModel = {
   },
 
   async getById(id, realEstateId) {
+    const conditions = realEstateId
+      ? and(eq(stpReading.id, id), eq(stpReading.realEstateId, realEstateId))
+      : eq(stpReading.id, id);
     const [row] = await db
       .select()
       .from(stpReading)
-      .where(and(eq(stpReading.id, id), eq(stpReading.realEstateId, realEstateId)))
+      .where(conditions)
       .limit(1);
     return row ?? null;
   },
@@ -109,7 +112,12 @@ export const StpReadingModel = {
   async remove(id, realEstateId) {
     const existing = await this.getById(id, realEstateId);
     if (!existing) return null;
-    await db.delete(stpReading).where(and(eq(stpReading.id, id), eq(stpReading.realEstateId, realEstateId)));
+
+    const conditions = realEstateId
+      ? and(eq(stpReading.id, id), eq(stpReading.realEstateId, realEstateId))
+      : eq(stpReading.id, id);
+
+    await db.delete(stpReading).where(conditions);
     return existing;
   },
 

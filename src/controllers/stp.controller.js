@@ -76,8 +76,11 @@ export async function createStpReading(req, res) {
 export async function removeStpReading(req, res) {
   try {
     const id = Number(req.params.id);
-    const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) return response.error(res, "realEstateId is required", 400);
+    const realEstateId = req.query.realEstateId
+      ? Number(req.query.realEstateId)
+      : req.body?.realEstateId
+      ? Number(req.body.realEstateId)
+      : undefined;
 
     const existing = await StpReadingModel.remove(id, realEstateId);
     if (!existing) return response.error(res, "STP reading not found", 404);
