@@ -70,6 +70,10 @@ export function createEquipmentDetailsModel(table) {
       const existing = await this.getById(id, realEstateId);
       if (!existing) return null;
 
+      const conditions = realEstateId
+        ? and(eq(table.id, id), eq(table.realEstateId, realEstateId))
+        : eq(table.id, id);
+
       await db
         .update(table)
         .set({
@@ -79,7 +83,7 @@ export function createEquipmentDetailsModel(table) {
           warantyPerson,
           addressOfWarantyPerson,
         })
-        .where(and(eq(table.id, id), eq(table.realEstateId, realEstateId)));
+        .where(conditions);
 
       return { id, nameOfManufacturer, parameters, dateWaranty, warantyPerson, addressOfWarantyPerson };
     },
@@ -101,7 +105,11 @@ export function createEquipmentDetailsModel(table) {
       const existing = await this.getById(id, realEstateId);
       if (!existing) return null;
 
-      await db.delete(table).where(and(eq(table.id, id), eq(table.realEstateId, realEstateId)));
+      const conditions = realEstateId
+        ? and(eq(table.id, id), eq(table.realEstateId, realEstateId))
+        : eq(table.id, id);
+
+      await db.delete(table).where(conditions);
       return existing;
     },
 

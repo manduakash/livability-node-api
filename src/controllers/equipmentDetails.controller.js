@@ -54,8 +54,7 @@ function buildEquipmentController(model, { entityLabel, lnkPrefix, auditModuleNa
     async update(req, res) {
       try {
         const id = Number(req.params.id);
-        const realEstateId = Number(req.body.realEstateId);
-        if (!realEstateId) return response.error(res, "realEstateId is required", 400);
+        const realEstateId = req.body.realEstateId ? Number(req.body.realEstateId) : undefined;
 
         const result = await model.update(id, realEstateId, req.body);
         if (!result) return response.error(res, `${entityLabel} not found`, 404);
@@ -76,8 +75,7 @@ function buildEquipmentController(model, { entityLabel, lnkPrefix, auditModuleNa
     async remove(req, res) {
       try {
         const id = Number(req.params.id);
-        const realEstateId = Number(req.query.realEstateId);
-        if (!realEstateId) return response.error(res, "realEstateId is required", 400);
+        const realEstateId = req.query.realEstateId ? Number(req.query.realEstateId) : undefined;
 
         const existing = await model.remove(id, realEstateId);
         if (!existing) return response.error(res, `${entityLabel} not found`, 404);
