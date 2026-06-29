@@ -25,7 +25,10 @@ export async function listMicroAna(req, res) {
 export async function setMicroAna(req, res) {
   try {
     const ecModuleId = Number(req.params.ecModuleId);
-    const microbialAnalysis = Number(req.params.type);
+    let microbialAnalysis = req.params.type;
+    if (microbialAnalysis === "pre") microbialAnalysis = 1;
+    else if (microbialAnalysis === "post") microbialAnalysis = 2;
+    else microbialAnalysis = Number(microbialAnalysis);
     const { realEstateId, ...rest } = req.body;
     if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
@@ -64,7 +67,10 @@ export async function listChemAna(req, res) {
 export async function setChemAna(req, res) {
   try {
     const ecModuleId = Number(req.params.ecModuleId);
-    const chemicalAnalysis = Number(req.params.type);
+    let chemicalAnalysis = req.params.type;
+    if (chemicalAnalysis === "pre") chemicalAnalysis = 1;
+    else if (chemicalAnalysis === "post") chemicalAnalysis = 2;
+    else chemicalAnalysis = Number(chemicalAnalysis);
     const { realEstateId, ...rest } = req.body;
     if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
