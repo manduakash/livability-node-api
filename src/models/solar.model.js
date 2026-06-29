@@ -170,10 +170,12 @@ export const SolarGenerationModel = {
    */
   async listRecentForChart(realEstateId, limit = 10) {
     return db
-      .select({ solarReadings: solarGeneration.solarReadings, dt: solarGeneration.dt })
+      .select({
+        dt: solarGeneration.dt,
+        solarReadings: solarGeneration.solarReadings,
+      })
       .from(solarGeneration)
       .where(eq(solarGeneration.realEstateId, realEstateId))
-      .groupBy(solarGeneration.dt)
       .orderBy(desc(solarGeneration.dt))
       .limit(limit);
   },
