@@ -174,7 +174,18 @@ export const AirPolutionListModel = {
     if (duplicate) return { created: false, id: null };
 
     const id = await this.getNextId();
-    await db.insert(airPolutionList).values({ id, ...data });
+    await db.insert(airPolutionList).values({
+      id,
+
+      airEmmition: data?.airEmmition ?? 0,
+      airPollutionParameters: data?.airPollutionParameters ?? 0,
+      reading: data?.reading ?? 0,
+      sampleDate: data?.sampleDate ?? "",
+      reportDate: data?.reportDate ?? "",
+      laboratory: data?.laboratory ?? "",
+      airDate: data?.airDate ?? new Date(),
+      industryMs: data?.industryMs ?? 0,
+    });
     return { created: true, id };
   },
 
