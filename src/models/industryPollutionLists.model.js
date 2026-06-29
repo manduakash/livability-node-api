@@ -41,20 +41,26 @@ export const WaterConsumptionListModel = {
     airDate,
     industryMs,
   }) {
-    const duplicate = await this.existsDuplicate({ waterConsumptionQuantity, dischargeQuantity, treatmentQuantity });
+    const duplicate = await this.existsDuplicate({
+      waterConsumptionQuantity,
+      dischargeQuantity,
+      treatmentQuantity,
+    });
+
     if (duplicate) return { created: false, id: null };
 
     const id = await this.getNextId();
+
     await db.insert(waterConsumptionList).values({
       id,
-      waterConsumptionQuantity,
-      uomWaterconsumption,
-      dischargeQuantity,
-      uomDischarge,
-      treatmentQuantity,
-      uomTreatment,
-      airDate,
-      industryMs,
+      waterConsumptionQuantity: waterConsumptionQuantity ?? 0,
+      uomWaterconsumption: uomWaterconsumption ?? 0,
+      dischargeQuantity: dischargeQuantity ?? 0,
+      uomDischarge: uomDischarge ?? 0,
+      treatmentQuantity: treatmentQuantity ?? 0,
+      uomTreatment: uomTreatment ?? 0,
+      airDate: airDate ?? new Date(),
+      industryMs: industryMs ?? 0,
     });
 
     return { created: true, id };
@@ -123,7 +129,21 @@ export const WaterPolutionListModel = {
     if (duplicate) return { created: false, id: null };
 
     const id = await this.getNextId();
-    await db.insert(waterPolutionList).values({ id, ...data });
+
+    await db.insert(waterPolutionList).values({
+      id,
+
+      waterPolution: data?.waterPolution ?? "",
+      inlet: data?.inlet ?? "",
+      outlet: data?.outlet ?? "",
+      sampleDate: data?.sampleDate ?? new Date(),
+      reportDate: data?.reportDate ?? new Date(),
+      readingTime: data?.readingTime ?? "",
+      laboratory: data?.laboratory ?? "",
+      airDate: data?.airDate ?? new Date(),
+      industryMs: data?.industryMs ?? "",
+    });
+
     return { created: true, id };
   },
 
