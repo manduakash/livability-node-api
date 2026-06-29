@@ -70,7 +70,7 @@ function buildEquipmentController(model, { entityLabel, lnkPrefix, auditModuleNa
       } catch (err) {
         return response.error(res, `Failed to update ${entityLabel}: ${err.message}`);
       }
-    },
+    }, 
 
     async remove(req, res) {
       try {
