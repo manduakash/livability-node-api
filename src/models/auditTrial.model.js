@@ -1,6 +1,6 @@
 import { and, between, count, desc, eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { auditTrial } from "../db/schema.js";
+import { auditTrial, realEstateMaster } from "../db/schema.js";
 
 /**
  * audit_trial: the write side (INSERT on every add/edit/delete action) is
@@ -23,8 +23,22 @@ export const AuditTrialModel = {
     if (username) conditions.push(eq(auditTrial.realEstateName, username));
 
     let query = db
-      .select()
+      .select({
+        id: auditTrial.id,
+        date1: auditTrial.date1,
+        type: auditTrial.type,
+        userId: auditTrial.userId,
+        lnk: auditTrial.lnk,
+        ip: auditTrial.ip,
+        panel: auditTrial.panel,
+        module: auditTrial.module,
+        realEstateName: auditTrial.realEstateName,
+        browser: auditTrial.browser,
+        device: auditTrial.device,
+        realEstateNameActual: realEstateMaster.realEstateName,
+      })
       .from(auditTrial)
+      .leftJoin(realEstateMaster, eq(auditTrial.realEstateName, realEstateMaster.username))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(auditTrial.id));
 
