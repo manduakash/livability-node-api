@@ -37,16 +37,22 @@ export async function upsertPortableWaterQuality(req, res) {
 
 // --- water_quality ---
 
-/** GET /api/:portal/water-quality?realEstateId=1&limit=10 */
+/** GET /api/:portal/water-quality?realEstateId=1&from=2026-01-01&to=2026-12-31 (or &limit=10) */
 export async function listWaterQuality(req, res) {
   try {
     if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
       return response.error(res, "realEstateId is required", 400);
     }
     const realEstateId = Number(req.query.realEstateId);
+    const { from, to } = req.query;
 
-    const limit = Number(req.query.limit) || 10;
-    const rows = await WaterQualityModel.listRecent(realEstateId, limit);
+    let rows;
+    if (from && to) {
+      rows = await WaterQualityModel.listByDateRange(realEstateId, from, to);
+    } else {
+      const limit = Number(req.query.limit) || 10;
+      rows = await WaterQualityModel.listRecent(realEstateId, limit);
+    }
     return response.success(res, "Water quality readings fetched", rows);
   } catch (err) {
     return response.error(res, `Failed to fetch water quality readings: ${err.message}`);

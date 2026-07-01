@@ -9,10 +9,10 @@ import { logAudit } from "../utils/auditLog.js";
  */
 export async function list(req, res) {
   try {
-    const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
       return response.error(res, "realEstateId is required", 400);
     }
+    const realEstateId = Number(req.query.realEstateId);
 
     const rows = await TreesModel.listByRealEstate(realEstateId);
     return response.success(res, "Trees fetched", rows);

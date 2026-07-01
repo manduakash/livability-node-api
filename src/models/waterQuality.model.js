@@ -133,6 +133,22 @@ export const WaterQualityModel = {
       .where(and(eq(waterQuality.realEstateId, realEstateId), eq(waterQuality.readingDate, date)));
   },
 
+  /** select * from water_quality where reading_date between '$from' and '$to' [and real_estate_id='$id'] order by id desc */
+  async listByDateRange(realEstateId, fromDate, toDate) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(waterQuality)
+        .where(between(waterQuality.readingDate, fromDate, toDate))
+        .orderBy(desc(waterQuality.id));
+    }
+    return db
+      .select()
+      .from(waterQuality)
+      .where(and(eq(waterQuality.realEstateId, realEstateId), between(waterQuality.readingDate, fromDate, toDate)))
+      .orderBy(desc(waterQuality.id));
+  },
+
   async listDistinctYears(realEstateId, fromDate, toDate) {
     const conditions = realEstateId === 0
       ? between(waterQuality.readingDate, fromDate, toDate)

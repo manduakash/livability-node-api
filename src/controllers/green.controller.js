@@ -7,7 +7,7 @@ export async function getGreen(req, res) {
   try {
     const realEstateId = Number(req.params.realEstateId);
     const row = await GreenModel.getByRealEstate(realEstateId);
-    if (!row) return response.error(res, "No green/tree config found for this property", 404);
+    if (!row) return response.success(res, "No green/tree config found for this property", null);
     return response.success(res, "Green config fetched", row);
   } catch (err) {
     return response.error(res, `Failed to fetch green config: ${err.message}`);

@@ -7,10 +7,13 @@ import { logAudit } from "../utils/auditLog.js";
 /** GET /api/:portal/waste-collection?realEstateId=1&from=2026-01-01&to=2026-06-01 */
 export async function listWasteCollection(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId, from, and to are required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
     const { from, to } = req.query;
-    if (!realEstateId || !from || !to) {
-      return response.error(res, "realEstateId, from, and to are required", 400);
+    if (!from || !to) {
+      return response.error(res, "from and to are required", 400);
     }
 
     const rows = await WasteCollectionModel.listByDateRange(realEstateId, from, to);
@@ -76,10 +79,13 @@ export async function removeWasteCollection(req, res) {
 /** GET /api/:portal/waste-details?realEstateId=1&date=2026-06-01 */
 export async function listWasteDetails(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId and date are required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
     const { date } = req.query;
-    if (!realEstateId || !date) {
-      return response.error(res, "realEstateId and date are required", 400);
+    if (!date) {
+      return response.error(res, "date is required", 400);
     }
 
     const rows = await WasteDetailsModel.listByDate(realEstateId, date);
@@ -157,9 +163,9 @@ export async function removeWasteDetails(req, res) {
 export async function getWasteRelated(req, res) {
   try {
     const realEstateId = Number(req.params.realEstateId);
-    const row = await WasteRelatedModel.getByRealEstate(realEstateId);
-    if (!row) return response.error(res, "No waste-related config found for this property", 404);
-    return response.success(res, "Waste-related config fetched", row);
+    const result = await WasteRelatedModel.getByRealEstate(realEstateId);
+    if (!result) return response.error(res, "No waste-related config found for this property", 404);
+    return response.success(res, "Waste-related config fetched", result);
   } catch (err) {
     return response.error(res, `Failed to fetch waste-related config: ${err.message}`);
   }

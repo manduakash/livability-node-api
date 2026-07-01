@@ -9,6 +9,9 @@ import { trees, realEstateMaster } from "../db/schema.js";
  */
 export const TreesModel = {
   async listByRealEstate(realEstateId) {
+    if (realEstateId === 0) {
+      return db.select().from(trees);
+    }
     return db.select().from(trees).where(eq(trees.realEstateId, realEstateId));
   },
 
