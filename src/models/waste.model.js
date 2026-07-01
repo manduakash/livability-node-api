@@ -39,6 +39,12 @@ export const WasteCollectionModel = {
    * select * from waste_collection where waste_date_collec between '$dd1' and '$dd2' and real_estate_id='$real'
    */
   async listByDateRange(realEstateId, fromDate, toDate) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(wasteCollection)
+        .where(between(wasteCollection.wasteDateCollec, fromDate, toDate));
+    }
     return db
       .select()
       .from(wasteCollection)
@@ -108,6 +114,12 @@ export const WasteDetailsModel = {
   },
 
   async listByDate(realEstateId, date) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(wasteDetails)
+        .where(eq(wasteDetails.wasteDate, date));
+    }
     return db
       .select()
       .from(wasteDetails)
@@ -146,6 +158,12 @@ export const WasteRelatedModel = {
   },
 
   async getByRealEstate(realEstateId) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(wasteRelated)
+        .orderBy(sql`${wasteRelated.id} DESC`);
+    }
     const rows = await db
       .select()
       .from(wasteRelated)
