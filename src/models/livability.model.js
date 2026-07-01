@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { livability, livabilityIndexMaster, tempLivability } from "../db/schema.js";
+import { livability, livabilityIndexMaster, tempLivability, realEstateMaster } from "../db/schema.js";
 
 /**
  * livability_index_master: the fixed list of scoring criteria (e.g.
@@ -283,11 +283,31 @@ export const TempLivabilityModel = {
 
   /** select * from temp_livability order by per_of_livability desc LIMIT 10 - best performers */
   async topPerformers(limit = 10) {
-    return db.select().from(tempLivability).orderBy(desc(tempLivability.perOfLivability)).limit(limit);
+    return db
+      .select({
+        id: tempLivability.id,
+        realEstateId: tempLivability.realEstateId,
+        perOfLivability: tempLivability.perOfLivability,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(tempLivability)
+      .innerJoin(realEstateMaster, eq(tempLivability.realEstateId, realEstateMaster.id))
+      .orderBy(desc(tempLivability.perOfLivability))
+      .limit(limit);
   },
 
   /** select * from temp_livability order by per_of_livability LIMIT 10 - worst performers */
   async bottomPerformers(limit = 10) {
-    return db.select().from(tempLivability).orderBy(tempLivability.perOfLivability).limit(limit);
+    return db
+      .select({
+        id: tempLivability.id,
+        realEstateId: tempLivability.realEstateId,
+        perOfLivability: tempLivability.perOfLivability,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(tempLivability)
+      .innerJoin(realEstateMaster, eq(tempLivability.realEstateId, realEstateMaster.id))
+      .orderBy(tempLivability.perOfLivability)
+      .limit(limit);
   },
 };
