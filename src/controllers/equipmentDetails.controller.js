@@ -6,8 +6,10 @@ function buildEquipmentController(model, { entityLabel, lnkPrefix, auditModuleNa
   return {
     async list(req, res) {
       try {
+        if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+          return response.error(res, "realEstateId is required", 400);
+        }
         const realEstateId = Number(req.query.realEstateId);
-        if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
         const rows = await model.listByRealEstate(realEstateId);
         return response.success(res, `${entityLabel} list fetched`, rows);

@@ -40,8 +40,10 @@ export async function upsertPortableWaterQuality(req, res) {
 /** GET /api/:portal/water-quality?realEstateId=1&limit=10 */
 export async function listWaterQuality(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
     const limit = Number(req.query.limit) || 10;
     const rows = await WaterQualityModel.listRecent(realEstateId, limit);
@@ -54,8 +56,10 @@ export async function listWaterQuality(req, res) {
 /** GET /api/:portal/water-quality/chart?realEstateId=1&limit=10 */
 export async function listWaterQualityChart(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
     const limit = Number(req.query.limit) || 10;
     const rows = await WaterQualityModel.listRecentForChart(realEstateId, limit);
@@ -68,11 +72,11 @@ export async function listWaterQualityChart(req, res) {
 /** GET /api/:portal/water-quality/years?realEstateId=1&from=&to= */
 export async function listWaterQualityYears(req, res) {
   try {
-    const realEstateId = Number(req.query.realEstateId);
-    const { from, to } = req.query;
-    if (!realEstateId || !from || !to) {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "" || !req.query.from || !req.query.to) {
       return response.error(res, "realEstateId, from, and to are required", 400);
     }
+    const realEstateId = Number(req.query.realEstateId);
+    const { from, to } = req.query;
 
     const years = await WaterQualityModel.listDistinctYears(realEstateId, from, to);
     return response.success(res, "Distinct water quality years fetched", years);

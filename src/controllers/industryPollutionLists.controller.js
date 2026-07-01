@@ -158,8 +158,10 @@ export async function createAirPolution(req, res) {
 
 export async function listAqmsMonitoringAqi(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
     const rows = await AqmsMonitoringAqiModel.listByRealEstate(realEstateId);
     return response.success(res, "AQMS AQI history fetched", rows);

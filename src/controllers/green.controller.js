@@ -17,8 +17,10 @@ export async function getGreen(req, res) {
 /** GET /api/:portal/green?realEstateId=1&from=&to= */
 export async function listGreen(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
     const { from, to } = req.query;
     const rows = from && to

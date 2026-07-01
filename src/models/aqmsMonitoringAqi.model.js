@@ -40,6 +40,9 @@ export const AqmsMonitoringAqiModel = {
   },
 
   async listByRealEstate(realEstateId) {
+    if (realEstateId === 0) {
+      return db.select().from(aqmsMonitoringAqi);
+    }
     return db.select().from(aqmsMonitoringAqi).where(eq(aqmsMonitoringAqi.realEstateId, realEstateId));
   },
 };

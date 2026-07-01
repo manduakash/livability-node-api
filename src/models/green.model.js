@@ -16,6 +16,12 @@ import { green, realEstateMaster } from "../db/schema.js";
  */
 export const GreenModel = {
   async getByRealEstate(realEstateId) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(green)
+        .orderBy(desc(green.id));
+    }
     const rows = await db
       .select()
       .from(green)
@@ -34,10 +40,19 @@ export const GreenModel = {
   },
 
   async listByRealEstate(realEstateId) {
+    if (realEstateId === 0) {
+      return db.select().from(green);
+    }
     return db.select().from(green).where(eq(green.realEstateId, realEstateId));
   },
 
   async listByDateRange(realEstateId, fromDate, toDate) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(green)
+        .where(between(green.dt, fromDate, toDate));
+    }
     return db
       .select()
       .from(green)

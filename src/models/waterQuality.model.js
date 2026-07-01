@@ -20,6 +20,12 @@ export const PortableWaterQualityModel = {
   },
 
   async getByRealEstate(realEstateId) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(portableWaterQuality)
+        .orderBy(desc(portableWaterQuality.id));
+    }
     const rows = await db
       .select()
       .from(portableWaterQuality)
@@ -99,6 +105,13 @@ export const WaterQualityModel = {
 
   /** select * from water_quality where real_estate_id='$id' order by id desc limit $ss */
   async listRecent(realEstateId, limit = 10) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(waterQuality)
+        .orderBy(desc(waterQuality.id))
+        .limit(limit);
+    }
     return db
       .select()
       .from(waterQuality)
@@ -108,6 +121,12 @@ export const WaterQualityModel = {
   },
 
   async listByDate(realEstateId, date) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(waterQuality)
+        .where(eq(waterQuality.readingDate, date));
+    }
     return db
       .select()
       .from(waterQuality)
@@ -115,12 +134,13 @@ export const WaterQualityModel = {
   },
 
   async listDistinctYears(realEstateId, fromDate, toDate) {
+    const conditions = realEstateId === 0
+      ? between(waterQuality.readingDate, fromDate, toDate)
+      : and(eq(waterQuality.realEstateId, realEstateId), between(waterQuality.readingDate, fromDate, toDate));
     const rows = await db
       .select({ year: sql`DISTINCT YEAR(${waterQuality.readingDate})` })
       .from(waterQuality)
-      .where(
-        and(eq(waterQuality.realEstateId, realEstateId), between(waterQuality.readingDate, fromDate, toDate))
-      );
+      .where(conditions);
     return rows.map((r) => Number(r.year));
   },
 
@@ -158,6 +178,13 @@ export const WaterQualityModel = {
 
   /** SELECT * from water_quality where real_estate_id='$id' group by reading_date order by reading_date DESC limit 10 */
   async listRecentForChart(realEstateId, limit = 10) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(waterQuality)
+        .orderBy(desc(waterQuality.readingDate))
+        .limit(limit);
+    }
     return db
       .select()
       .from(waterQuality)

@@ -25,6 +25,9 @@ export function createEquipmentDetailsModel(table) {
     },
 
     async listByRealEstate(realEstateId) {
+      if (realEstateId === 0) {
+        return db.select().from(table).orderBy(table.id);
+      }
       return db.select().from(table).where(eq(table.realEstateId, realEstateId)).orderBy(table.id);
     },
 
