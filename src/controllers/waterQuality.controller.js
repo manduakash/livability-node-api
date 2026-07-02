@@ -47,9 +47,6 @@ export async function listWaterQuality(req, res) {
     const realEstateId = Number(req.query.realEstateId);
     const { from, to } = req.query;
 
-    const realEstate = await RealEstateMasterModel.getById(realEstateId);
-    const realEstateName = realEstate ? realEstate.realEstateName : "";
-
     let rows;
     if (from && to) {
       rows = await WaterQualityModel.listByDateRange(realEstateId, from, to);
@@ -58,9 +55,16 @@ export async function listWaterQuality(req, res) {
       rows = await WaterQualityModel.listRecent(realEstateId, limit);
     }
 
+    const reIds = [...new Set(rows.map((r) => r.realEstateId))];
+    const reMap = {};
+    for (const id of reIds) {
+      const re = await RealEstateMasterModel.getById(id);
+      reMap[id] = re ? re.realEstateName : "";
+    }
+
     const mappedRows = rows.map((row) => ({
       ...row,
-      realEstateName,
+      realEstateName: reMap[row.realEstateId] || "",
     }));
 
     return response.success(res, "Water quality readings fetched", mappedRows);
