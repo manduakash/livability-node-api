@@ -1,5 +1,6 @@
 import { response } from "../utils/response.js";
 import { PortableWaterQualityModel, WaterQualityModel } from "../models/waterQuality.model.js";
+import { RealEstateMasterModel } from "../models/realEstateMaster.model.js";
 import { logAudit } from "../utils/auditLog.js";
 
 // --- portable_water_quality ---
@@ -46,6 +47,9 @@ export async function listWaterQuality(req, res) {
     const realEstateId = Number(req.query.realEstateId);
     const { from, to } = req.query;
 
+    const realEstate = await RealEstateMasterModel.getById(realEstateId);
+    const realEstateName = realEstate ? realEstate.realEstateName : "";
+
     let rows;
     if (from && to) {
       rows = await WaterQualityModel.listByDateRange(realEstateId, from, to);
@@ -53,7 +57,13 @@ export async function listWaterQuality(req, res) {
       const limit = Number(req.query.limit) || 10;
       rows = await WaterQualityModel.listRecent(realEstateId, limit);
     }
-    return response.success(res, "Water quality readings fetched", rows);
+
+    const mappedRows = rows.map((row) => ({
+      ...row,
+      realEstateName,
+    }));
+
+    return response.success(res, "Water quality readings fetched", mappedRows);
   } catch (err) {
     return response.error(res, `Failed to fetch water quality readings: ${err.message}`);
   }
