@@ -11,6 +11,7 @@ import { StpModel } from "../models/stp.model.js";
 import { PortableWaterQualityModel, WaterQualityModel } from "../models/waterQuality.model.js";
 import { NoiseDetailsAllModel } from "../models/noiseDetailsAll.model.js";
 import { TempLivabilityModel } from "../models/livability.model.js";
+import { RealEstateMasterModel } from "../models/realEstateMaster.model.js";
 import { desc, eq } from "drizzle-orm";
 
 // --- display_board ---
@@ -62,8 +63,13 @@ export async function getDisplayBoard(req, res) {
     const livabilityData = await TempLivabilityModel.getByRealEstate(realEstateId);
     const livabilityIndex = livabilityData?.perOfLivability || 0;
 
+    const profileData = await RealEstateMasterModel.getById(realEstateId);
+
     const extendedRow = {
       ...row,
+      projectName: profileData?.realEstateName || "",
+      address: profileData?.addrReal || "",
+      developerName: profileData?.developerName || "",
       solarPower,
       greenArea,
       rainwaterHarvesting,
