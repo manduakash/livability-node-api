@@ -1,6 +1,17 @@
 import { response } from "../utils/response.js";
 import { DisplayBoardModel, AutocomposterModel, NotificationMessagesModel } from "../models/notifications.model.js";
 import { logAudit } from "../utils/auditLog.js";
+import { db } from "../db/index.js";
+import { aqmsMonitoringMain, noiseDetailsAll } from "../db/schema.js";
+import { SolarEnergyModel } from "../models/solar.model.js";
+import { GreenModel } from "../models/green.model.js";
+import { RainwaterHarvestingModel } from "../models/rainwaterHarvesting.model.js";
+import { WasteRelatedModel } from "../models/waste.model.js";
+import { StpModel } from "../models/stp.model.js";
+import { PortableWaterQualityModel, WaterQualityModel } from "../models/waterQuality.model.js";
+import { NoiseDetailsAllModel } from "../models/noiseDetailsAll.model.js";
+import { TempLivabilityModel } from "../models/livability.model.js";
+import { desc, eq } from "drizzle-orm";
 
 // --- display_board ---
 
@@ -10,7 +21,70 @@ export async function getDisplayBoard(req, res) {
     const realEstateId = Number(req.params.realEstateId);
     const row = await DisplayBoardModel.getByRealEstate(realEstateId);
     if (!row) return response.error(res, "No display board config found for this property", 404);
-    return response.success(res, "Display board config fetched", row);
+
+    const solarPower = await SolarEnergyModel.getFlag(realEstateId) || "no";
+    const greenData = await GreenModel.getFlags(realEstateId);
+    const greenArea = greenData?.flagGreen || "no";
+    const rainwaterHarvesting = await RainwaterHarvestingModel.getFlag(realEstateId) || "no";
+    
+    const wasteRelated = await WasteRelatedModel.getByRealEstate(realEstateId);
+    const wasteSegregation = wasteRelated?.segregation || "no";
+    const autoComposter = wasteRelated?.auto || "no";
+
+    const stp = await StpModel.getFlag(realEstateId) || "no";
+    const waterQualitySensor = await PortableWaterQualityModel.getWaterSensorFlag(realEstateId) || "no";
+
+    const recentWater = await WaterQualityModel.listRecent(realEstateId, 1);
+    const waterQualityData = recentWater?.[0] || { ph: 0, tss: 0, tds: 0, temp: 0 };
+
+    const recentAqms = await db.select({ aqi: aqmsMonitoringMain.aqi })
+      .from(aqmsMonitoringMain)
+      .where(eq(aqmsMonitoringMain.realEstateId, realEstateId))
+      .orderBy(desc(aqmsMonitoringMain.id))
+      .limit(1);
+    const aqms = recentAqms?.[0]?.aqi || 0;
+
+    const recentNoise = await db.select()
+      .from(noiseDetailsAll)
+      .where(eq(noiseDetailsAll.realEstateId, realEstateId))
+      .orderBy(desc(noiseDetailsAll.id))
+      .limit(1);
+    let anmsValue = 0;
+    if (recentNoise?.[0]) {
+      const n = recentNoise[0];
+      const { db: computedDb } = NoiseDetailsAllModel.computeScore([n.las, n.lcs, n.lzs, n.laeqt, n.lapeakt, n.lceqt, n.lcpeakt, n.lzeqt, n.lzpeakt]);
+      anmsValue = computedDb;
+    }
+    
+    const anmsFlagRes = await NoiseDetailsAllModel.getAnmsFlag(realEstateId);
+    const anmsInstalled = anmsFlagRes.allowed ? "yes" : "no";
+
+    const livabilityData = await TempLivabilityModel.getByRealEstate(realEstateId);
+    const livabilityIndex = livabilityData?.perOfLivability || 0;
+
+    const extendedRow = {
+      ...row,
+      solarPower,
+      greenArea,
+      rainwaterHarvesting,
+      aqms,
+      wasteSegregation,
+      anms: anmsValue,
+      anmsInstalled,
+      autoComposter,
+      displayBoard: row.status,
+      stp,
+      waterQualitySensor,
+      livabilityIndex,
+      waterQuality: {
+        ph: waterQualityData.ph,
+        tss: waterQualityData.tss,
+        tds: waterQualityData.tds,
+        temp: waterQualityData.temp,
+      }
+    };
+
+    return response.success(res, "Display board config fetched", extendedRow);
   } catch (err) {
     return response.error(res, `Failed to fetch display board config: ${err.message}`);
   }
