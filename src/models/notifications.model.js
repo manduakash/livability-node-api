@@ -89,16 +89,41 @@ export const AutocomposterModel = {
   },
 
   async listByRealEstate(realEstateId) {
-    return db.select().from(autocomposter).where(eq(autocomposter.realEstateId, realEstateId));
+    const query = db
+      .select({
+        id: autocomposter.id,
+        dt: autocomposter.dt,
+        totCompostProduction: autocomposter.totCompostProduction,
+        totHours: autocomposter.totHours,
+        realEstateId: autocomposter.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(autocomposter)
+      .leftJoin(realEstateMaster, eq(autocomposter.realEstateId, realEstateMaster.id));
+
+    if (realEstateId === 0) return query;
+    return query.where(eq(autocomposter.realEstateId, realEstateId));
   },
 
   async listByDateRange(realEstateId, fromDate, toDate) {
-    return db
-      .select()
+    const query = db
+      .select({
+        id: autocomposter.id,
+        dt: autocomposter.dt,
+        totCompostProduction: autocomposter.totCompostProduction,
+        totHours: autocomposter.totHours,
+        realEstateId: autocomposter.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+      })
       .from(autocomposter)
-      .where(
-        and(eq(autocomposter.realEstateId, realEstateId), between(autocomposter.dt, fromDate, toDate))
-      );
+      .leftJoin(realEstateMaster, eq(autocomposter.realEstateId, realEstateMaster.id));
+
+    if (realEstateId === 0) {
+      return query.where(between(autocomposter.dt, fromDate, toDate));
+    }
+    return query.where(
+      and(eq(autocomposter.realEstateId, realEstateId), between(autocomposter.dt, fromDate, toDate))
+    );
   },
 
   async listByDateLike(realEstateId, datePattern) {

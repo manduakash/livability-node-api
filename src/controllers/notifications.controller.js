@@ -120,8 +120,9 @@ export async function upsertDisplayBoard(req, res) {
 /** GET /api/:portal/autocomposter?realEstateId=1&from=&to= */
 export async function listAutocomposter(req, res) {
   try {
-    const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) return response.error(res, "realEstateId is required", 400);
+    const realEstateIdStr = req.query.realEstateId;
+    if (realEstateIdStr === undefined) return response.error(res, "realEstateId is required", 400);
+    const realEstateId = Number(realEstateIdStr);
 
     const { from, to } = req.query;
     const rows = from && to
