@@ -131,10 +131,15 @@ export const WasteDetailsModel = {
    * (and similarly for the other 4 fixed categories)
    */
   async listByDateRangeAndCategory(category, fromDate, toDate) {
+    const dateFilter = between(wasteDetails.wasteDate, fromDate, toDate);
     return db
       .select()
       .from(wasteDetails)
-      .where(and(eq(wasteDetails.wasteName, category), between(wasteDetails.wasteDate, fromDate, toDate)));
+      .where(
+        category === "All"
+          ? dateFilter
+          : and(eq(wasteDetails.wasteName, category), dateFilter)
+      );
   },
 
   async remove(id) {
