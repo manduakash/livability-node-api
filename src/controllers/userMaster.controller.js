@@ -97,6 +97,7 @@ export async function getProfile(req, res) {
       phone: row.phone,
       website: row.website,
       email: row.email,
+      password: row.password,
       profilePhoto: realEstateRow?.profilePhoto || "",
     };
 
