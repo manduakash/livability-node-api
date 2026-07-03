@@ -1,5 +1,6 @@
 import { response } from "../utils/response.js";
 import { UserMasterModel } from "../models/userMaster.model.js";
+import { RealEstateMasterModel } from "../models/realEstateMaster.model.js";
 import { logAudit } from "../utils/auditLog.js";
 
 /** GET /api/:portal/users?userType=pcb&stateId=1 */
@@ -81,15 +82,46 @@ export async function updateUser(req, res) {
     return response.error(res, `Failed to update user: ${err.message}`);
   }
 }
+/** GET /api/:portal/users/:userId/profile */
+export async function getProfile(req, res) {
+  try {
+    const { userId } = req.params;
+    const row = await UserMasterModel.getByUserId(userId);
+    if (!row) return response.error(res, "User not found", 404);
 
-/** PATCH /api/:portal/users/:userName/profile  { phone, website, email } */
+    const realEstateRow = await RealEstateMasterModel.getByUsername(row.userName);
+
+    const profileData = {
+      userName: row.userName,
+      userId: row.userId,
+      phone: row.phone,
+      website: row.website,
+      email: row.email,
+      profilePhoto: realEstateRow?.profilePhoto || "",
+    };
+
+    return response.success(res, "Profile fetched", profileData);
+  } catch (err) {
+    return response.error(res, `Failed to fetch profile: ${err.message}`);
+  }
+}
+
+/** PATCH /api/:portal/users/:userId/profile  { phone, website, email, password } */
 export async function updateProfile(req, res) {
   try {
-    const { userName } = req.params;
-    const { phone, website, email } = req.body;
+    const { userId } = req.params;
+    const { phone, website, email, password } = req.body;
 
-    await UserMasterModel.updateProfile(userName, { phone, website, email });
-    return response.success(res, "Profile updated", { userName, phone, website, email });
+    const row = await UserMasterModel.getByUserId(userId);
+    if (!row) return response.error(res, "User not found", 404);
+
+    await UserMasterModel.updateProfile(row.userName, { phone, website, email });
+    
+    if (password) {
+      await UserMasterModel.updatePassword(row.userName, password);
+    }
+
+    return response.success(res, "Profile updated successfully");
   } catch (err) {
     return response.error(res, `Failed to update profile: ${err.message}`);
   }
