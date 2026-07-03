@@ -16,7 +16,7 @@ export const AuthModel = {
     const rows = await db
       .select()
       .from(userMaster)
-      .where(and(eq(userMaster.userId, userName), eq(userMaster.password, btoa(password))))
+      .where(and(eq(userMaster.userId, userName), eq(userMaster.password, password)))
       .limit(1);
 
     const user = rows[0];
