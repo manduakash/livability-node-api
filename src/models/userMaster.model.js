@@ -78,7 +78,7 @@ export const UserMasterModel = {
 
     await db
       .update(userMaster)
-      .set({ userName, userId, password, userType, updatedon: new Date() })
+      .set({ userName, userId, password: btoa(password), userType, updatedon: new Date() })
       .where(eq(userMaster.id, id));
 
     return { id, userName, userId, userType };
@@ -91,7 +91,7 @@ export const UserMasterModel = {
 
   /** UPDATE user_master set password=... where user_name=... (change password) */
   async updatePassword(userName, newPassword) {
-    await db.update(userMaster).set({ password: newPassword }).where(eq(userMaster.userName, userName));
+    await db.update(userMaster).set({ password: btoa(newPassword) }).where(eq(userMaster.userName, userName));
   },
 
   async remove(id) {
