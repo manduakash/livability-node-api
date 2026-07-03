@@ -7,16 +7,20 @@ import { userMaster } from "../db/schema.js";
  *   SELECT * FROM user_master WHERE user_id='$log_user' AND password='$log_pass'
  *   -> checks status==1, branches on user_type ('admin' | 'pcb' | 'real_estate')
  *
- * NOTE: the legacy table stores passwords in plain text (no hashing). This
- * is preserved here for drop-in compatibility with existing rows; strongly
- * recommend migrating to bcrypt hashes - see README "Security notes".
+ * NOTE: the legacy table stores passwords in Base64 (btoa). This is preserved
+ * for compatibility with existing rows.
  */
 export const AuthModel = {
   async findActiveUser(userName, password) {
     const rows = await db
       .select()
       .from(userMaster)
-      .where(and(eq(userMaster.userId, userName), eq(userMaster.password, password)))
+      .where(
+        and(
+          eq(userMaster.userId, userName),
+          eq(userMaster.password, btoa(password))
+        )
+      )
       .limit(1);
 
     const user = rows[0];
