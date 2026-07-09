@@ -105,6 +105,7 @@ export const WaterQualityModel = {
 
   /** select * from water_quality where real_estate_id='$id' order by id desc limit $ss */
   async listRecent(realEstateId, limit = 10) {
+    const deviceSubquery = sql`(SELECT device FROM water_sensor_all WHERE real_estate_id = ${waterQuality.realEstateId} ORDER BY timestamp DESC LIMIT 1)`;
     if (realEstateId === 0) {
       return db
         .select({
@@ -117,10 +118,9 @@ export const WaterQualityModel = {
           cod: waterQuality.cod,
           readingDate: waterQuality.readingDate,
           realEstateId: waterQuality.realEstateId,
-          deviceName: portableWaterQuality.waterSensor,
+          deviceName: deviceSubquery,
         })
         .from(waterQuality)
-        .leftJoin(portableWaterQuality, eq(waterQuality.realEstateId, portableWaterQuality.realEstateId))
         .orderBy(desc(waterQuality.id))
         .limit(limit);
     }
@@ -135,10 +135,9 @@ export const WaterQualityModel = {
         cod: waterQuality.cod,
         readingDate: waterQuality.readingDate,
         realEstateId: waterQuality.realEstateId,
-        deviceName: portableWaterQuality.waterSensor,
+        deviceName: deviceSubquery,
       })
       .from(waterQuality)
-      .leftJoin(portableWaterQuality, eq(waterQuality.realEstateId, portableWaterQuality.realEstateId))
       .where(eq(waterQuality.realEstateId, realEstateId))
       .orderBy(desc(waterQuality.id))
       .limit(limit);
@@ -159,6 +158,7 @@ export const WaterQualityModel = {
 
   /** select * from water_quality where reading_date between '$from' and '$to' [and real_estate_id='$id'] order by id desc */
   async listByDateRange(realEstateId, fromDate, toDate) {
+    const deviceSubquery = sql`(SELECT device FROM water_sensor_all WHERE real_estate_id = ${waterQuality.realEstateId} ORDER BY timestamp DESC LIMIT 1)`;
     const columns = {
       id: waterQuality.id,
       tss: waterQuality.tss,
@@ -169,20 +169,18 @@ export const WaterQualityModel = {
       cod: waterQuality.cod,
       readingDate: waterQuality.readingDate,
       realEstateId: waterQuality.realEstateId,
-      deviceName: portableWaterQuality.waterSensor,
+      deviceName: deviceSubquery,
     };
     if (realEstateId === 0) {
       return db
         .select(columns)
         .from(waterQuality)
-        .leftJoin(portableWaterQuality, eq(waterQuality.realEstateId, portableWaterQuality.realEstateId))
         .where(between(waterQuality.readingDate, fromDate, toDate))
         .orderBy(desc(waterQuality.id));
     }
     return db
       .select(columns)
       .from(waterQuality)
-      .leftJoin(portableWaterQuality, eq(waterQuality.realEstateId, portableWaterQuality.realEstateId))
       .where(and(eq(waterQuality.realEstateId, realEstateId), between(waterQuality.readingDate, fromDate, toDate)))
       .orderBy(desc(waterQuality.id));
   },
