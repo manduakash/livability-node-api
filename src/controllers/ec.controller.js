@@ -7,8 +7,10 @@ import { logAudit } from "../utils/auditLog.js";
 /** GET /api/:portal/ec-module?realEstateId=1 */
 export async function listEcModule(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
     const rows = await EcModuleModel.listByRealEstate(realEstateId);
     return response.success(res, "EC module records fetched", rows);
@@ -120,8 +122,10 @@ export async function removeEcModule(req, res) {
 /** GET /api/:portal/ec-sanction?realEstateId=1 */
 export async function listEcSanction(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
     const rows = await EcSanctionModel.listByRealEstate(realEstateId);
     return response.success(res, "EC sanction records fetched", rows);

@@ -101,10 +101,13 @@ export async function removeStpReading(req, res) {
 /** GET /api/:portal/stp-readings?realEstateId=1&from=2026-01-01&to=2026-06-01 */
 export async function listStpReadings(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
     const { from, to } = req.query;
-    if (!realEstateId || !from || !to) {
-      return response.error(res, "realEstateId, from, and to are required", 400);
+    if (!from || !to) {
+      return response.error(res, "from and to are required", 400);
     }
 
     const rows = await StpReadingModel.listByDateRange(realEstateId, from, to);
@@ -117,10 +120,13 @@ export async function listStpReadings(req, res) {
 /** GET /api/:portal/stp-readings/years?realEstateId=1&from=2026-01-01&to=2026-06-01 */
 export async function listStpReadingYears(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
     const { from, to } = req.query;
-    if (!realEstateId || !from || !to) {
-      return response.error(res, "realEstateId, from, and to are required", 400);
+    if (!from || !to) {
+      return response.error(res, "from and to are required", 400);
     }
 
     const years = await StpReadingModel.listDistinctYears(realEstateId, from, to);
@@ -133,10 +139,13 @@ export async function listStpReadingYears(req, res) {
 /** GET /api/:portal/stp-readings/by-year?realEstateId=1&year=2026&from=2026-01-01&to=2026-06-01 */
 export async function listStpReadingsByYear(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
     const { year, from, to } = req.query;
-    if (!realEstateId || !year || !from || !to) {
-      return response.error(res, "realEstateId, year, from, and to are required", 400);
+    if (!year || !from || !to) {
+      return response.error(res, "year, from, and to are required", 400);
     }
 
     const rows = await StpReadingModel.listMetricsByYear(Number(year), from, to, realEstateId);

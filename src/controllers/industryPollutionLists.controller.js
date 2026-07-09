@@ -11,8 +11,8 @@ import { logAudit } from "../utils/auditLog.js";
 
 export async function listWaterConsumption(req, res) {
   try {
-    const { industryMs } = req.query;
-    if (!industryMs) return response.error(res, "industryMs is required", 400);
+    const idParam = req.query.industryMs ?? req.query.realEstateId ?? req.query.realestateId;
+    const industryMs = idParam !== undefined && idParam !== "" ? Number(idParam) : 0;
 
     const rows = await WaterConsumptionListModel.listByIndustry(industryMs);
     return response.success(res, "Water consumption records fetched", rows);
@@ -23,8 +23,8 @@ export async function listWaterConsumption(req, res) {
 
 export async function getWaterConsumptionTotals(req, res) {
   try {
-    const { industryMs } = req.query;
-    if (!industryMs) return response.error(res, "industryMs is required", 400);
+    const idParam = req.query.industryMs ?? req.query.realEstateId ?? req.query.realestateId;
+    const industryMs = idParam !== undefined && idParam !== "" ? Number(idParam) : 0;
 
     const totals = await WaterConsumptionListModel.getTotalsByIndustry(industryMs);
     return response.success(res, "Water consumption totals fetched", totals);
@@ -35,10 +35,11 @@ export async function getWaterConsumptionTotals(req, res) {
 
 export async function createWaterConsumption(req, res) {
   try {
-    const { industryMs, airDate } = req.body;
-    if (!industryMs || !airDate) return response.error(res, "industryMs and airDate are required", 400);
+    const { industryMs, realEstateId, airDate } = req.body;
+    const idParam = industryMs ?? realEstateId;
+    if (!idParam || !airDate) return response.error(res, "industryMs/realEstateId and airDate are required", 400);
 
-    const result = await WaterConsumptionListModel.create(req.body);
+    const result = await WaterConsumptionListModel.create({ ...req.body, industryMs: Number(idParam) });
     if (!result.created) {
       return response.success(res, "Record already exists, skipped (duplicate)", result);
     }
@@ -60,8 +61,8 @@ export async function createWaterConsumption(req, res) {
 
 export async function listWaterPolution(req, res) {
   try {
-    const { industryMs } = req.query;
-    if (!industryMs) return response.error(res, "industryMs is required", 400);
+    const idParam = req.query.industryMs ?? req.query.realEstateId ?? req.query.realestateId;
+    const industryMs = idParam !== undefined && idParam !== "" ? Number(idParam) : 0;
 
     const rows = await WaterPolutionListModel.listByIndustry(industryMs);
     return response.success(res, "Water pollution records fetched", rows);
@@ -72,8 +73,8 @@ export async function listWaterPolution(req, res) {
 
 export async function getWaterPolutionTotals(req, res) {
   try {
-    const { industryMs } = req.query;
-    if (!industryMs) return response.error(res, "industryMs is required", 400);
+    const idParam = req.query.industryMs ?? req.query.realEstateId ?? req.query.realestateId;
+    const industryMs = idParam !== undefined && idParam !== "" ? Number(idParam) : 0;
 
     const totals = await WaterPolutionListModel.getTotalsByIndustry(industryMs);
     return response.success(res, "Water pollution totals fetched", totals);
@@ -84,10 +85,11 @@ export async function getWaterPolutionTotals(req, res) {
 
 export async function createWaterPolution(req, res) {
   try {
-    const { industryMs, airDate } = req.body;
-    if (!industryMs || !airDate) return response.error(res, "industryMs and airDate are required", 400);
+    const { industryMs, realEstateId, airDate } = req.body;
+    const idParam = industryMs ?? realEstateId;
+    if (!idParam || !airDate) return response.error(res, "industryMs/realEstateId and airDate are required", 400);
 
-    const result = await WaterPolutionListModel.create(req.body);
+    const result = await WaterPolutionListModel.create({ ...req.body, industryMs: Number(idParam) });
     if (!result.created) {
       return response.success(res, "Record already exists, skipped (duplicate)", result);
     }
@@ -109,10 +111,10 @@ export async function createWaterPolution(req, res) {
 
 export async function listAirPolution(req, res) {
   try {
-    const { industryMs } = req.query;
-    if (!industryMs) return response.error(res, "industryMs is required", 400);
+    const idParam = req.query.industryMs ?? req.query.realEstateId ?? req.query.realestateId;
+    const industryMs = idParam !== undefined && idParam !== "" ? Number(idParam) : 0;
 
-    const rows = await AirPolutionListModel.listByIndustry(Number(industryMs));
+    const rows = await AirPolutionListModel.listByIndustry(industryMs);
     return response.success(res, "Air pollution records fetched", rows);
   } catch (err) {
     return response.error(res, `Failed to fetch air pollution records: ${err.message}`);
@@ -121,10 +123,10 @@ export async function listAirPolution(req, res) {
 
 export async function getAirPolutionTotals(req, res) {
   try {
-    const { industryMs } = req.query;
-    if (!industryMs) return response.error(res, "industryMs is required", 400);
+    const idParam = req.query.industryMs ?? req.query.realEstateId ?? req.query.realestateId;
+    const industryMs = idParam !== undefined && idParam !== "" ? Number(idParam) : 0;
 
-    const totals = await AirPolutionListModel.getTotalsByIndustry(Number(industryMs));
+    const totals = await AirPolutionListModel.getTotalsByIndustry(industryMs);
     return response.success(res, "Air pollution totals fetched", totals);
   } catch (err) {
     return response.error(res, `Failed to fetch air pollution totals: ${err.message}`);

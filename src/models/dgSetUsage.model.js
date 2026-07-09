@@ -36,10 +36,19 @@ export const DgSetUsageModel = {
   },
 
   async listByRealEstate(realEstateId) {
+    if (realEstateId === 0) {
+      return db.select().from(dgSetUsage);
+    }
     return db.select().from(dgSetUsage).where(eq(dgSetUsage.realEstateId, realEstateId));
   },
 
   async listByDateRange(realEstateId, fromDate, toDate) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(dgSetUsage)
+        .where(between(dgSetUsage.dateOfDg, fromDate, toDate));
+    }
     return db
       .select()
       .from(dgSetUsage)
@@ -47,6 +56,12 @@ export const DgSetUsageModel = {
   },
 
   async listByDateLike(realEstateId, datePattern) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(dgSetUsage)
+        .where(like(dgSetUsage.dateOfDg, `%${datePattern}%`));
+    }
     return db
       .select()
       .from(dgSetUsage)

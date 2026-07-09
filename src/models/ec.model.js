@@ -68,10 +68,11 @@ export const EcModuleModel = {
   },
 
   async listByRealEstate(realEstateId) {
+    const conditions = realEstateId === 0 ? undefined : eq(ecModule.realEstateId, realEstateId);
     return db
       .select()
       .from(ecModule)
-      .where(eq(ecModule.realEstateId, realEstateId))
+      .where(conditions)
       .orderBy(desc(ecModule.id));
   },
 
@@ -154,10 +155,11 @@ export const EcSanctionModel = {
   },
 
   async listByRealEstate(realEstateId) {
+    const conditions = realEstateId === 0 ? undefined : eq(ecSanction.realEstateId, realEstateId);
     return db
       .select()
       .from(ecSanction)
-      .where(eq(ecSanction.realEstateId, realEstateId))
+      .where(conditions)
       .orderBy(desc(ecSanction.id));
   },
 

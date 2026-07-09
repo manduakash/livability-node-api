@@ -14,19 +14,21 @@ export const StpModel = {
   },
 
   async getByRealEstate(realEstateId) {
+    const conditions = realEstateId === 0 ? undefined : eq(stp.realEstateId, realEstateId);
     const rows = await db
       .select()
       .from(stp)
-      .where(eq(stp.realEstateId, realEstateId))
+      .where(conditions)
       .orderBy(sql`${stp.id} DESC`);
     return rows[0] ?? null;
   },
 
   async getFlag(realEstateId) {
+    const conditions = realEstateId === 0 ? undefined : eq(stp.realEstateId, realEstateId);
     const [row] = await db
       .select({ flagStp: stp.flagStp })
       .from(stp)
-      .where(eq(stp.realEstateId, realEstateId))
+      .where(conditions)
       .limit(1);
     return row?.flagStp ?? null;
   },
@@ -125,12 +127,13 @@ export const StpReadingModel = {
    * select * from stp_reading where real_estate_id='$real_estate_id' and reading_date between '$dd1' and '$dd2'
    */
   async listByDateRange(realEstateId, fromDate, toDate) {
+    const conditions = realEstateId === 0
+      ? between(stpReading.readingDate, fromDate, toDate)
+      : and(eq(stpReading.realEstateId, realEstateId), between(stpReading.readingDate, fromDate, toDate));
     return db
       .select()
       .from(stpReading)
-      .where(
-        and(eq(stpReading.realEstateId, realEstateId), between(stpReading.readingDate, fromDate, toDate))
-      );
+      .where(conditions);
   },
 
   /**
@@ -139,12 +142,13 @@ export const StpReadingModel = {
    * (used to populate a year-selector for the readings chart)
    */
   async listDistinctYears(realEstateId, fromDate, toDate) {
+    const conditions = realEstateId === 0
+      ? between(stpReading.readingDate, fromDate, toDate)
+      : and(eq(stpReading.realEstateId, realEstateId), between(stpReading.readingDate, fromDate, toDate));
     const rows = await db
       .select({ year: sql`DISTINCT YEAR(${stpReading.readingDate})` })
       .from(stpReading)
-      .where(
-        and(eq(stpReading.realEstateId, realEstateId), between(stpReading.readingDate, fromDate, toDate))
-      );
+      .where(conditions);
     return rows.map((r) => Number(r.year));
   },
 
@@ -153,6 +157,16 @@ export const StpReadingModel = {
    * where YEAR(reading_date)='$year' and reading_date between '$dd1' and '$dd2'
    */
   async listMetricsByYear(year, fromDate, toDate, realEstateId) {
+    const conditions = realEstateId === 0
+      ? and(
+          sql`YEAR(${stpReading.readingDate}) = ${year}`,
+          between(stpReading.readingDate, fromDate, toDate)
+        )
+      : and(
+          sql`YEAR(${stpReading.readingDate}) = ${year}`,
+          between(stpReading.readingDate, fromDate, toDate),
+          eq(stpReading.realEstateId, realEstateId)
+        );
     return db
       .select({
         bod: stpReading.bod,
@@ -165,12 +179,6 @@ export const StpReadingModel = {
         readingDate: stpReading.readingDate,
       })
       .from(stpReading)
-      .where(
-        and(
-          sql`YEAR(${stpReading.readingDate}) = ${year}`,
-          between(stpReading.readingDate, fromDate, toDate),
-          eq(stpReading.realEstateId, realEstateId)
-        )
-      );
+      .where(conditions);
   },
 };

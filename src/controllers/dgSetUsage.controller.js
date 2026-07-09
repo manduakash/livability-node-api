@@ -5,8 +5,10 @@ import { logAudit } from "../utils/auditLog.js";
 /** GET /api/:portal/dg-set-usage?realEstateId=1&from=&to= */
 export async function listDgSetUsage(req, res) {
   try {
+    if (req.query.realEstateId === undefined || req.query.realEstateId === "") {
+      return response.error(res, "realEstateId is required", 400);
+    }
     const realEstateId = Number(req.query.realEstateId);
-    if (!realEstateId) return response.error(res, "realEstateId is required", 400);
 
     const { from, to } = req.query;
     const rows = from && to

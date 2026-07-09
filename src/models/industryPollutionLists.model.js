@@ -66,12 +66,17 @@ export const WaterConsumptionListModel = {
     return { created: true, id };
   },
 
-  async listByIndustry(industryMs) {
-    return db
+  async listByIndustry(realEstateId) {
+    const conditions = Number(realEstateId) === 0 ? undefined : eq(waterConsumptionList.industryMs, String(realEstateId));
+    const rows = await db
       .select()
       .from(waterConsumptionList)
-      .where(eq(waterConsumptionList.industryMs, industryMs))
+      .where(conditions)
       .orderBy(waterConsumptionList.id);
+    return rows.map(r => ({
+      ...r,
+      realEstateId: Number(r.industryMs) || 0
+    }));
   },
 
   async listGroupedByIndustry() {
@@ -79,7 +84,8 @@ export const WaterConsumptionListModel = {
   },
 
   /** select count/sum aggregate for one industry's discharge & treatment totals */
-  async getTotalsByIndustry(industryMs) {
+  async getTotalsByIndustry(realEstateId) {
+    const conditions = Number(realEstateId) === 0 ? undefined : eq(waterConsumptionList.industryMs, String(realEstateId));
     const [row] = await db
       .select({
         totCount: sql`COUNT(${waterConsumptionList.dischargeQuantity})`,
@@ -87,7 +93,7 @@ export const WaterConsumptionListModel = {
         totTreat: sql`SUM(${waterConsumptionList.treatmentQuantity})`,
       })
       .from(waterConsumptionList)
-      .where(eq(waterConsumptionList.industryMs, industryMs));
+      .where(conditions);
 
     return {
       totCount: Number(row?.totCount) || 0,
@@ -147,17 +153,23 @@ export const WaterPolutionListModel = {
     return { created: true, id };
   },
 
-  async listByIndustry(industryMs) {
-    return db.select().from(waterPolutionList).where(eq(waterPolutionList.industryMs, industryMs));
+  async listByIndustry(realEstateId) {
+    const conditions = Number(realEstateId) === 0 ? undefined : eq(waterPolutionList.industryMs, String(realEstateId));
+    const rows = await db.select().from(waterPolutionList).where(conditions);
+    return rows.map(r => ({
+      ...r,
+      realEstateId: Number(r.industryMs) || 0
+    }));
   },
 
-  async getTotalsByIndustry(industryMs) {
+  async getTotalsByIndustry(realEstateId) {
+    const conditions = Number(realEstateId) === 0 ? undefined : eq(waterPolutionList.industryMs, String(realEstateId));
     const [row] = await db
       .select({
         totCount: sql`COUNT(${waterPolutionList.readingTime})`,
       })
       .from(waterPolutionList)
-      .where(eq(waterPolutionList.industryMs, industryMs));
+      .where(conditions);
 
     return { totCount: Number(row?.totCount) || 0 };
   },
@@ -209,18 +221,24 @@ export const AirPolutionListModel = {
     return { created: true, id };
   },
 
-  async listByIndustry(industryMs) {
-    return db.select().from(airPolutionList).where(eq(airPolutionList.industryMs, industryMs));
+  async listByIndustry(realEstateId) {
+    const conditions = Number(realEstateId) === 0 ? undefined : eq(airPolutionList.industryMs, Number(realEstateId));
+    const rows = await db.select().from(airPolutionList).where(conditions);
+    return rows.map(r => ({
+      ...r,
+      realEstateId: r.industryMs
+    }));
   },
 
-  async getTotalsByIndustry(industryMs) {
+  async getTotalsByIndustry(realEstateId) {
+    const conditions = Number(realEstateId) === 0 ? undefined : eq(airPolutionList.industryMs, Number(realEstateId));
     const [row] = await db
       .select({
         totCount: sql`COUNT(${airPolutionList.reading})`,
         totReading: sql`SUM(${airPolutionList.reading})`,
       })
       .from(airPolutionList)
-      .where(eq(airPolutionList.industryMs, industryMs));
+      .where(conditions);
 
     return { totCount: Number(row?.totCount) || 0, totReading: Number(row?.totReading) || 0 };
   },
