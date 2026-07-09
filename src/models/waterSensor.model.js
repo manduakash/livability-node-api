@@ -1,7 +1,17 @@
 import { and, between, desc, eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { waterSensorAll, waterSensor } from "../db/schema.js";
+import { waterSensorAll, waterSensor, realEstateMaster } from "../db/schema.js";
 import { parseApiTimestamp } from "../utils/dateTime.js";
+
+/** Columns selected in list queries (sensor row + estate name) */
+const listColumns = {
+  id: waterSensorAll.id,
+  device: waterSensorAll.device,
+  timestamp: waterSensorAll.timestamp,
+  waterdepth: waterSensorAll.waterdepth,
+  realEstateId: waterSensorAll.realEstateId,
+  realEstateName: realEstateMaster.realEstateName,
+};
 
 /**
  * Mirrors the legacy duplicate-check + manual id increment pattern:
@@ -85,8 +95,9 @@ export const WaterSensorModel = {
       ? undefined
       : eq(waterSensorAll.realEstateId, realEstateId);
     return db
-      .select()
+      .select(listColumns)
       .from(waterSensorAll)
+      .leftJoin(realEstateMaster, eq(waterSensorAll.realEstateId, realEstateMaster.id))
       .where(conditions)
       .orderBy(desc(waterSensorAll.timestamp));
   },
@@ -98,14 +109,16 @@ export const WaterSensorModel = {
   async listLastByRealEstate(realEstateId) {
     if (realEstateId === 0) {
       return db
-        .select()
+        .select(listColumns)
         .from(waterSensorAll)
+        .leftJoin(realEstateMaster, eq(waterSensorAll.realEstateId, realEstateMaster.id))
         .orderBy(desc(waterSensorAll.timestamp))
         .limit(50);
     }
     return db
-      .select()
+      .select(listColumns)
       .from(waterSensorAll)
+      .leftJoin(realEstateMaster, eq(waterSensorAll.realEstateId, realEstateMaster.id))
       .where(eq(waterSensorAll.realEstateId, realEstateId))
       .orderBy(desc(waterSensorAll.timestamp))
       .limit(1);
@@ -127,8 +140,9 @@ export const WaterSensorModel = {
         );
 
     return db
-      .select()
+      .select(listColumns)
       .from(waterSensorAll)
+      .leftJoin(realEstateMaster, eq(waterSensorAll.realEstateId, realEstateMaster.id))
       .where(conditions)
       .orderBy(desc(waterSensorAll.timestamp));
   },

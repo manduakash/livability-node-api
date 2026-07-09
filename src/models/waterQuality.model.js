@@ -107,14 +107,38 @@ export const WaterQualityModel = {
   async listRecent(realEstateId, limit = 10) {
     if (realEstateId === 0) {
       return db
-        .select()
+        .select({
+          id: waterQuality.id,
+          tss: waterQuality.tss,
+          tds: waterQuality.tds,
+          temp: waterQuality.temp,
+          ph: waterQuality.ph,
+          bod: waterQuality.bod,
+          cod: waterQuality.cod,
+          readingDate: waterQuality.readingDate,
+          realEstateId: waterQuality.realEstateId,
+          deviceName: portableWaterQuality.waterSensor,
+        })
         .from(waterQuality)
+        .leftJoin(portableWaterQuality, eq(waterQuality.realEstateId, portableWaterQuality.realEstateId))
         .orderBy(desc(waterQuality.id))
         .limit(limit);
     }
     return db
-      .select()
+      .select({
+        id: waterQuality.id,
+        tss: waterQuality.tss,
+        tds: waterQuality.tds,
+        temp: waterQuality.temp,
+        ph: waterQuality.ph,
+        bod: waterQuality.bod,
+        cod: waterQuality.cod,
+        readingDate: waterQuality.readingDate,
+        realEstateId: waterQuality.realEstateId,
+        deviceName: portableWaterQuality.waterSensor,
+      })
       .from(waterQuality)
+      .leftJoin(portableWaterQuality, eq(waterQuality.realEstateId, portableWaterQuality.realEstateId))
       .where(eq(waterQuality.realEstateId, realEstateId))
       .orderBy(desc(waterQuality.id))
       .limit(limit);
@@ -135,16 +159,30 @@ export const WaterQualityModel = {
 
   /** select * from water_quality where reading_date between '$from' and '$to' [and real_estate_id='$id'] order by id desc */
   async listByDateRange(realEstateId, fromDate, toDate) {
+    const columns = {
+      id: waterQuality.id,
+      tss: waterQuality.tss,
+      tds: waterQuality.tds,
+      temp: waterQuality.temp,
+      ph: waterQuality.ph,
+      bod: waterQuality.bod,
+      cod: waterQuality.cod,
+      readingDate: waterQuality.readingDate,
+      realEstateId: waterQuality.realEstateId,
+      deviceName: portableWaterQuality.waterSensor,
+    };
     if (realEstateId === 0) {
       return db
-        .select()
+        .select(columns)
         .from(waterQuality)
+        .leftJoin(portableWaterQuality, eq(waterQuality.realEstateId, portableWaterQuality.realEstateId))
         .where(between(waterQuality.readingDate, fromDate, toDate))
         .orderBy(desc(waterQuality.id));
     }
     return db
-      .select()
+      .select(columns)
       .from(waterQuality)
+      .leftJoin(portableWaterQuality, eq(waterQuality.realEstateId, portableWaterQuality.realEstateId))
       .where(and(eq(waterQuality.realEstateId, realEstateId), between(waterQuality.readingDate, fromDate, toDate)))
       .orderBy(desc(waterQuality.id));
   },
