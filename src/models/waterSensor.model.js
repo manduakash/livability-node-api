@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, between, desc, eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { waterSensorAll, waterSensor } from "../db/schema.js";
 import { parseApiTimestamp } from "../utils/dateTime.js";
@@ -74,6 +74,65 @@ export const WaterSensorModel = {
     return { total: timestamps.length, inserted };
   },
 
+  // --- Query methods for Water Pollution / Water Sensor listing ---
+
+  /**
+   * List all sensor readings, optionally filtered by realEstateId.
+   * realEstateId = 0 → return all records across all properties.
+   */
+  async listByRealEstate(realEstateId) {
+    const conditions = realEstateId === 0
+      ? undefined
+      : eq(waterSensorAll.realEstateId, realEstateId);
+    return db
+      .select()
+      .from(waterSensorAll)
+      .where(conditions)
+      .orderBy(desc(waterSensorAll.timestamp));
+  },
+
+  /**
+   * Return only the most recent reading for each property (or for a specific one).
+   * realEstateId = 0 → last record for every property.
+   */
+  async listLastByRealEstate(realEstateId) {
+    if (realEstateId === 0) {
+      return db
+        .select()
+        .from(waterSensorAll)
+        .orderBy(desc(waterSensorAll.timestamp))
+        .limit(50);
+    }
+    return db
+      .select()
+      .from(waterSensorAll)
+      .where(eq(waterSensorAll.realEstateId, realEstateId))
+      .orderBy(desc(waterSensorAll.timestamp))
+      .limit(1);
+  },
+
+  /**
+   * List readings within a date range, optionally filtered by realEstateId.
+   * from / to should be "YYYY-MM-DD" strings.
+   */
+  async listByDateRange(realEstateId, fromDate, toDate) {
+    const fromDt = new Date(`${fromDate}T00:00:00`);
+    const toDt   = new Date(`${toDate}T23:59:59`);
+
+    const conditions = realEstateId === 0
+      ? between(waterSensorAll.timestamp, fromDt, toDt)
+      : and(
+          eq(waterSensorAll.realEstateId, realEstateId),
+          between(waterSensorAll.timestamp, fromDt, toDt)
+        );
+
+    return db
+      .select()
+      .from(waterSensorAll)
+      .where(conditions)
+      .orderBy(desc(waterSensorAll.timestamp));
+  },
+
   // --- water_sensor (singular table) ---
   // Older/simpler legacy variant found in test_waterapi.php: no dedupe
   // check, single direct insert per API call rather than looping over the
@@ -102,3 +161,4 @@ export const WaterSensorModel = {
     return id;
   },
 };
+

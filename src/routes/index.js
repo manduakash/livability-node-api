@@ -29,6 +29,7 @@ import userMasterRoutes from "./userMaster.routes.js";
 import livabilityRoutes from "./livability.routes.js";
 import tempRealMasterRoutes from "./tempRealMaster.routes.js";
 import equipmentDetailsRoutes from "./equipmentDetails.routes.js";
+import waterDepthRoutes from "./waterDepth.routes.js";
 
 import { requireAuth } from "../middleware/auth.js";
 import { portalTag } from "../middleware/portalTag.js";
@@ -77,6 +78,7 @@ const portalRouters = [
   livabilityRoutes,
   tempRealMasterRoutes,
   equipmentDetailsRoutes,
+  waterDepthRoutes,
 ];
 
 router.use("/admin", requireAuth(["admin"]), portalTag("admin"), ...portalRouters);
