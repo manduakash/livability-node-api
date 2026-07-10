@@ -4,9 +4,9 @@ import path from "path";
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
 // Ensure upload directory exists
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
+// if (!fs.existsSync(UPLOAD_DIR)) {
+//   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+// }
 
 export function parseMultipart(req) {
   return new Promise((resolve, reject) => {
@@ -81,7 +81,7 @@ export function parseMultipart(req) {
               // e.g. current_project_views[0][project_image_file]
               const baseName = fieldName.split("[")[0];
               if (!files[baseName]) files[baseName] = [];
-              
+
               // We'll also store it flat for easy direct lookup
               files[fieldName] = fileData;
             } else {
@@ -144,16 +144,16 @@ function setNestedField(obj, pathStr, value) {
   for (let i = 0; i < tokens.length - 1; i++) {
     const token = tokens[i];
     const nextToken = tokens[i + 1];
-    
+
     // Check if next token is a number (array index)
     const isNextNumber = !isNaN(Number(nextToken));
-    
+
     if (!current[token]) {
       current[token] = isNextNumber ? [] : {};
     }
     current = current[token];
   }
-  
+
   const lastToken = tokens[tokens.length - 1];
   current[lastToken] = value;
 }
