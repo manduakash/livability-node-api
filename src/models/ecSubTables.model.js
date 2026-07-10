@@ -71,6 +71,34 @@ export const EcMonitoringMicroAnaModel = {
 
     return res.insertId;
   },
+
+  async setAll(ecModuleId, realEstateId, microbialAnalysis, sampleCollection, sampleDrawn, sessionKey, items) {
+    await db
+      .delete(ecMonitoringMicroAna)
+      .where(
+        and(
+          eq(ecMonitoringMicroAna.ecModuleId, ecModuleId),
+          eq(ecMonitoringMicroAna.microbialAnalysis, microbialAnalysis)
+        )
+      );
+
+    const ids = [];
+    for (const item of items) {
+      const [res] = await db.insert(ecMonitoringMicroAna).values({
+        realEstateId,
+        ecModuleId,
+        sampleCollection: sampleCollection ?? "",
+        sampleDrawn: sampleDrawn ? new Date(sampleDrawn) : new Date(),
+        microbialAnalysis,
+        testParameter: item.test_parameter ?? "",
+        limitAsPer: item.limit_is10500_2012 ?? "",
+        result: item.result ?? "",
+        sessionKey: sessionKey ?? "",
+      });
+      ids.push(res.insertId);
+    }
+    return ids;
+  },
 };
 
 /**
@@ -131,6 +159,35 @@ export const EcMonitoringChemAnaModel = {
     });
 
     return res.insertId;
+  },
+
+  async setAll(ecModuleId, realEstateId, chemicalAnalysis, sampleCollection, sampleDrawn, sessionKey, items) {
+    await db
+      .delete(ecMonitoringChemAna)
+      .where(
+        and(
+          eq(ecMonitoringChemAna.ecModuleId, ecModuleId),
+          eq(ecMonitoringChemAna.chemicalAnalysis, chemicalAnalysis)
+        )
+      );
+
+    const ids = [];
+    for (const item of items) {
+      const [res] = await db.insert(ecMonitoringChemAna).values({
+        realEstateId,
+        ecModuleId,
+        sampleCollection: sampleCollection ?? "",
+        sampleDrawn: sampleDrawn ? new Date(sampleDrawn) : new Date(),
+        chemicalAnalysis,
+        testParameter: item.test_parameter ?? "",
+        desirableLimit: item.desirable_limit ?? "",
+        permissibleLimit: item.permissible_limit ?? "",
+        result: item.result ?? "",
+        sessionKey: sessionKey ?? "",
+      });
+      ids.push(res.insertId);
+    }
+    return ids;
   },
 };
 
