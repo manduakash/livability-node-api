@@ -1,6 +1,6 @@
 import { eq, and, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { waterConsumptionList, waterPolutionList, airPolutionList } from "../db/schema.js";
+import { waterConsumptionList, waterPolutionList, airPolutionList, realEstateMaster } from "../db/schema.js";
 
 /**
  * These 3 tables share an identical legacy pattern: manual max(id)+1
@@ -69,8 +69,20 @@ export const WaterConsumptionListModel = {
   async listByIndustry(realEstateId) {
     const conditions = Number(realEstateId) === 0 ? undefined : eq(waterConsumptionList.industryMs, String(realEstateId));
     const rows = await db
-      .select()
+      .select({
+        id: waterConsumptionList.id,
+        waterConsumptionQuantity: waterConsumptionList.waterConsumptionQuantity,
+        uomWaterconsumption: waterConsumptionList.uomWaterconsumption,
+        dischargeQuantity: waterConsumptionList.dischargeQuantity,
+        uomDischarge: waterConsumptionList.uomDischarge,
+        treatmentQuantity: waterConsumptionList.treatmentQuantity,
+        uomTreatment: waterConsumptionList.uomTreatment,
+        airDate: waterConsumptionList.airDate,
+        industryMs: waterConsumptionList.industryMs,
+        realEstateName: realEstateMaster.realEstateName,
+      })
       .from(waterConsumptionList)
+      .leftJoin(realEstateMaster, eq(sql`CAST(${waterConsumptionList.industryMs} AS UNSIGNED)`, realEstateMaster.id))
       .where(conditions)
       .orderBy(waterConsumptionList.id);
     return rows.map(r => ({
@@ -155,7 +167,23 @@ export const WaterPolutionListModel = {
 
   async listByIndustry(realEstateId) {
     const conditions = Number(realEstateId) === 0 ? undefined : eq(waterPolutionList.industryMs, String(realEstateId));
-    const rows = await db.select().from(waterPolutionList).where(conditions);
+    const rows = await db
+      .select({
+        id: waterPolutionList.id,
+        waterPolution: waterPolutionList.waterPolution,
+        inlet: waterPolutionList.inlet,
+        outlet: waterPolutionList.outlet,
+        sampleDate: waterPolutionList.sampleDate,
+        reportDate: waterPolutionList.reportDate,
+        readingTime: waterPolutionList.readingTime,
+        laboratoryId: waterPolutionList.laboratory,
+        airDate: waterPolutionList.airDate,
+        industryMs: waterPolutionList.industryMs,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(waterPolutionList)
+      .leftJoin(realEstateMaster, eq(sql`CAST(${waterPolutionList.industryMs} AS UNSIGNED)`, realEstateMaster.id))
+      .where(conditions);
     return rows.map(r => ({
       ...r,
       realEstateId: Number(r.industryMs) || 0
@@ -223,7 +251,22 @@ export const AirPolutionListModel = {
 
   async listByIndustry(realEstateId) {
     const conditions = Number(realEstateId) === 0 ? undefined : eq(airPolutionList.industryMs, Number(realEstateId));
-    const rows = await db.select().from(airPolutionList).where(conditions);
+    const rows = await db
+      .select({
+        id: airPolutionList.id,
+        airEmmition: airPolutionList.airEmmition,
+        airPollutionParameters: airPolutionList.airPollutionParameters,
+        reading: airPolutionList.reading,
+        sampleDate: airPolutionList.sampleDate,
+        reportDate: airPolutionList.reportDate,
+        laboratoryId: airPolutionList.laboratory,
+        airDate: airPolutionList.airDate,
+        industryMs: airPolutionList.industryMs,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(airPolutionList)
+      .leftJoin(realEstateMaster, eq(airPolutionList.industryMs, realEstateMaster.id))
+      .where(conditions);
     return rows.map(r => ({
       ...r,
       realEstateId: r.industryMs
