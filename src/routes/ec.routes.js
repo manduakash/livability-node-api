@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as ecController from "../controllers/ec.controller.js";
+import { multipartMiddleware } from "../utils/multipart.js";
 
 const router = Router();
 
