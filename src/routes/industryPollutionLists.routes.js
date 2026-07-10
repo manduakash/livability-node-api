@@ -11,6 +11,8 @@ router.post("/water-consumption-list", controller.createWaterConsumption);
 router.get("/water-polution-list/totals", controller.getWaterPolutionTotals);
 router.get("/water-polution-list", controller.listWaterPolution);
 router.post("/water-polution-list", controller.createWaterPolution);
+router.put("/water-polution-list/:id", controller.updateWaterPolution);
+router.delete("/water-polution-list/:id", controller.removeWaterPolution);
 
 router.get("/air-polution-list/totals", controller.getAirPolutionTotals);
 router.get("/air-polution-list", controller.listAirPolution);

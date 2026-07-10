@@ -135,11 +135,21 @@ export const WaterPolutionListModel = {
           eq(waterPolutionList.readingTime, readingTime),
           eq(waterPolutionList.laboratory, laboratory),
           eq(waterPolutionList.airDate, airDate),
-          eq(waterPolutionList.industryMs, industryMs)
+          eq(waterPolutionList.industryMs, industryMs),
+          sql`water_polution_list.del_status = 0`
         )
       )
       .limit(1);
     return rows.length > 0;
+  },
+
+  async getById(id) {
+    const [row] = await db
+      .select()
+      .from(waterPolutionList)
+      .where(and(eq(waterPolutionList.id, id), sql`water_polution_list.del_status = 0`))
+      .limit(1);
+    return row ?? null;
   },
 
   async create(data) {
@@ -165,8 +175,34 @@ export const WaterPolutionListModel = {
     return { created: true, id };
   },
 
+  async update(id, data) {
+    await db
+      .update(waterPolutionList)
+      .set({
+        waterPolution: data.waterPolution,
+        inlet: data.inlet,
+        outlet: data.outlet,
+        sampleDate: data.sampleDate ? new Date(data.sampleDate) : undefined,
+        reportDate: data.reportDate ? new Date(data.reportDate) : undefined,
+        readingTime: data.readingTime,
+        laboratory: data.laboratoryId !== undefined ? data.laboratoryId : data.laboratory,
+        airDate: data.airDate ? new Date(data.airDate) : undefined,
+      })
+      .where(eq(waterPolutionList.id, id));
+    return this.getById(id);
+  },
+
+  async remove(id) {
+    const existing = await this.getById(id);
+    if (!existing) return null;
+    await db.execute(sql`UPDATE water_polution_list SET del_status = 1 WHERE id = ${id}`);
+    return existing;
+  },
+
   async listByIndustry(realEstateId) {
-    const conditions = Number(realEstateId) === 0 ? undefined : eq(waterPolutionList.industryMs, String(realEstateId));
+    const industryCondition = Number(realEstateId) === 0 ? undefined : eq(waterPolutionList.industryMs, String(realEstateId));
+    const notDeletedCondition = sql`water_polution_list.del_status = 0`;
+    const conditions = industryCondition ? and(industryCondition, notDeletedCondition) : notDeletedCondition;
     const rows = await db
       .select({
         id: waterPolutionList.id,
@@ -191,7 +227,9 @@ export const WaterPolutionListModel = {
   },
 
   async getTotalsByIndustry(realEstateId) {
-    const conditions = Number(realEstateId) === 0 ? undefined : eq(waterPolutionList.industryMs, String(realEstateId));
+    const industryCondition = Number(realEstateId) === 0 ? undefined : eq(waterPolutionList.industryMs, String(realEstateId));
+    const notDeletedCondition = sql`water_polution_list.del_status = 0`;
+    const conditions = industryCondition ? and(industryCondition, notDeletedCondition) : notDeletedCondition;
     const [row] = await db
       .select({
         totCount: sql`COUNT(${waterPolutionList.readingTime})`,

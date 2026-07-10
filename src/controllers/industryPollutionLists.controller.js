@@ -108,6 +108,46 @@ export async function createWaterPolution(req, res) {
   }
 }
 
+export async function updateWaterPolution(req, res) {
+  try {
+    const id = Number(req.params.id);
+    const existing = await WaterPolutionListModel.getById(id);
+    if (!existing) return response.error(res, "Water pollution record not found", 404);
+
+    const updated = await WaterPolutionListModel.update(id, req.body);
+
+    await logAudit(req, {
+      type: "EDIT",
+      lnk: "edit_water_polution_list_admin.php",
+      panel: req.portal.toUpperCase(),
+      module: "Edit_water_polution_list",
+    });
+
+    return response.success(res, "Water pollution record updated", updated);
+  } catch (err) {
+    return response.error(res, `Failed to update water pollution record: ${err.message}`);
+  }
+}
+
+export async function removeWaterPolution(req, res) {
+  try {
+    const id = Number(req.params.id);
+    const existing = await WaterPolutionListModel.remove(id);
+    if (!existing) return response.error(res, "Water pollution record not found", 404);
+
+    await logAudit(req, {
+      type: "DELETE",
+      lnk: "water_polution_list_delete.php",
+      panel: req.portal.toUpperCase(),
+      module: "Delete_water_polution_list",
+    });
+
+    return response.success(res, "Water pollution record deleted", existing);
+  } catch (err) {
+    return response.error(res, `Failed to delete water pollution record: ${err.message}`);
+  }
+}
+
 // --- air_polution_list ---
 
 export async function listAirPolution(req, res) {
