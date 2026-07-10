@@ -132,10 +132,13 @@ export async function createEcModule(req, res) {
     });
     const sessionKey = sessionRes.row.sessionKey;
 
-    // Handle files
-    const proponentFile = req.files?.project_proponent_file?.path || req.body.project_proponent || "-";
-    const googleMapFile = req.files?.location_google_map_file?.path || req.body.location_google_map || "-";
-    const googleSatelliteFile = req.files?.location_google_satellite_file?.path || req.body.location_google_satellite || "-";
+    // Handle file paths from request body
+    const proponentFile = req.body.project_proponent_file || req.body.project_proponent || "-";
+    const googleMapFile = req.body.location_google_map_file || req.body.location_google_map || "-";
+    const googleSatelliteFile =
+      req.body.location_google_satellite_file ||
+      req.body.location_google_satellite ||
+      "-";
 
     // Insert to ec_module
     const currentMonth = new Date().toLocaleString("en-US", { month: "long" });
@@ -308,43 +311,45 @@ export async function createEcModule(req, res) {
     });
 
     // Save current project views
+    // Save current project views
     const projectViews = [];
-    if (req.files) {
-      for (let i = 0; i < 30; i++) {
-        const fileKey = `current_project_views[${i}][project_image_file]`;
-        const titleKey = `current_project_views[${i}][image_title]`;
-        const fileObj = req.files[fileKey];
-        const title = req.body[`current_project_views[${i}][image_title]`] || req.body[titleKey] || "";
-        if (fileObj) {
-          projectViews.push({
-            image: fileObj.path,
-            imageTitle: title,
-            sessionKey
-          });
-        }
+    for (let i = 0; i < 30; i++) {
+      const image =
+        req.body[`current_project_views[${i}][project_image_file]`] || "";
+      const title =
+        req.body[`current_project_views[${i}][image_title]`] || "";
+
+      if (image) {
+        projectViews.push({
+          image,
+          imageTitle: title,
+          sessionKey
+        });
       }
     }
+
     if (projectViews.length > 0) {
       await EcModuleProjectViewModel.replaceAll(ecModuleId, realEstateId, projectViews);
     }
 
     // Save field photographs
+    // Save field photographs
     const fieldPhotographs = [];
-    if (req.files) {
-      for (let i = 0; i < 30; i++) {
-        const fileKey = `field_photographs[${i}][photo_file]`;
-        const titleKey = `field_photographs[${i}][field_title]`;
-        const fileObj = req.files[fileKey];
-        const title = req.body[`field_photographs[${i}][field_title]`] || req.body[titleKey] || "";
-        if (fileObj) {
-          fieldPhotographs.push({
-            fieldImage: fileObj.path,
-            fieldImageTitle: title,
-            sessionKey
-          });
-        }
+    for (let i = 0; i < 30; i++) {
+      const fieldImage =
+        req.body[`field_photographs[${i}][photo_file]`] || "";
+      const fieldImageTitle =
+        req.body[`field_photographs[${i}][field_title]`] || "";
+
+      if (fieldImage) {
+        fieldPhotographs.push({
+          fieldImage,
+          fieldImageTitle,
+          sessionKey
+        });
       }
     }
+
     if (fieldPhotographs.length > 0) {
       await EcModuleFieldPhotographModel.replaceAll(ecModuleId, realEstateId, fieldPhotographs);
     }

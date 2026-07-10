@@ -8,7 +8,7 @@ router.get("/ec-module/search", ecController.searchEcModule);
 router.get("/ec-module/paginated", ecController.listEcModulePaginated);
 router.get("/ec-module/:id", ecController.getEcModule);
 router.get("/ec-module", ecController.listEcModule);
-router.post("/ec-module", multipartMiddleware, ecController.createEcModule);
+router.post("/ec-module", ecController.createEcModule);
 router.patch("/ec-module/:realEstateId/upload", ecController.setEcModuleUpload);
 router.delete("/ec-module/:id", ecController.removeEcModule);
 
