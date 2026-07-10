@@ -82,6 +82,51 @@ export const StpModel = {
  * tables in this codebase), so no manual max(id)+1 needed here.
  */
 export const StpReadingModel = {
+  async reportByDateRange({ fromDate, toDate, realEstateId, offset, pageSize = 10 } = {}) {
+    const conditions = [];
+
+    if (fromDate && toDate) {
+      conditions.push(between(stpReading.readingDate, fromDate, toDate));
+    } else if (fromDate) {
+      conditions.push(sql`${stpReading.readingDate} >= ${fromDate}`);
+    } else if (toDate) {
+      conditions.push(sql`${stpReading.readingDate} <= ${toDate}`);
+    }
+
+    if (realEstateId !== undefined && Number(realEstateId) !== 0) {
+      conditions.push(eq(stpReading.realEstateId, Number(realEstateId)));
+    }
+
+    let query = db
+      .select({
+        id: stpReading.id,
+        inlet: stpReading.inlet,
+        outlet: stpReading.outlet,
+        bod: stpReading.bod,
+        ph: stpReading.ph,
+        tss: stpReading.tss,
+        nitrogen: stpReading.nitrogen,
+        cod: stpReading.cod,
+        feedal: stpReading.feedal,
+        coliform: stpReading.coliform,
+        readingDate: stpReading.readingDate,
+        realEstateId: stpReading.realEstateId,
+      })
+      .from(stpReading);
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    query = query.orderBy(stpReading.readingDate);
+
+    if (offset !== undefined) {
+      query = query.limit(pageSize).offset(offset);
+    }
+
+    return query;
+  },
+
   async create({ inlet, outlet, bod, ph, tss, nitrogen, cod, feedal, coliform, readingDate, realEstateId }) {
     const [result] = await db.insert(stpReading).values({
       inlet,

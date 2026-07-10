@@ -1,4 +1,4 @@
-import { and, between, eq, like } from "drizzle-orm";
+import { and, between, eq, like, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { dgSetUsage } from "../db/schema.js";
 
@@ -8,6 +8,46 @@ import { dgSetUsage } from "../db/schema.js";
  * waste_collection/autocomposter/solar_generation.
  */
 export const DgSetUsageModel = {
+  async reportByDateRange({ fromDate, toDate, realEstateId, offset, pageSize = 10 } = {}) {
+    const conditions = [];
+
+    if (fromDate && toDate) {
+      conditions.push(between(dgSetUsage.dateOfDg, fromDate, toDate));
+    } else if (fromDate) {
+      conditions.push(sql`${dgSetUsage.dateOfDg} >= ${fromDate}`);
+    } else if (toDate) {
+      conditions.push(sql`${dgSetUsage.dateOfDg} <= ${toDate}`);
+    }
+
+    if (realEstateId !== undefined && Number(realEstateId) !== 0) {
+      conditions.push(eq(dgSetUsage.realEstateId, Number(realEstateId)));
+    }
+
+    let query = db
+      .select({
+        id: dgSetUsage.id,
+        hoursUsed: dgSetUsage.hoursUsed,
+        electricity: dgSetUsage.electricity,
+        oilConsumption: dgSetUsage.oilConsumption,
+        wasteGenerated: dgSetUsage.wasteGenerated,
+        realEstateId: dgSetUsage.realEstateId,
+        dateOfDg: dgSetUsage.dateOfDg,
+      })
+      .from(dgSetUsage);
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    query = query.orderBy(dgSetUsage.dateOfDg);
+
+    if (offset !== undefined) {
+      query = query.limit(pageSize).offset(offset);
+    }
+
+    return query;
+  },
+
   async create({ hoursUsed, electricity, oilConsumption, wasteGenerated, realEstateId, dateOfDg }) {
     const [result] = await db
       .insert(dgSetUsage)

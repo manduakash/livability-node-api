@@ -1,4 +1,4 @@
-import { and, between, desc, eq, like } from "drizzle-orm";
+import { and, between, desc, eq, like, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { green, realEstateMaster } from "../db/schema.js";
 
@@ -112,7 +112,15 @@ export const GreenModel = {
    * Admin cross-property reporting query - all filters optional.
    */
   async reportByDateRange({ fromDate, toDate, nameSearch, stateId, offset, pageSize = 10 } = {}) {
-    const conditions = [between(green.dt, fromDate, toDate)];
+    const conditions = [];
+    if (fromDate && toDate) {
+      conditions.push(between(green.dt, fromDate, toDate));
+    } else if (fromDate) {
+      conditions.push(sql`${green.dt} >= ${fromDate}`);
+    } else if (toDate) {
+      conditions.push(sql`${green.dt} <= ${toDate}`);
+    }
+
     if (nameSearch) conditions.push(like(realEstateMaster.realEstateName, `%${nameSearch}%`));
     if (stateId) conditions.push(eq(realEstateMaster.state, stateId));
 
@@ -125,9 +133,13 @@ export const GreenModel = {
         realEstateName: realEstateMaster.realEstateName,
       })
       .from(green)
-      .innerJoin(realEstateMaster, eq(green.realEstateId, realEstateMaster.id))
-      .where(and(...conditions))
-      .orderBy(green.dt);
+      .innerJoin(realEstateMaster, eq(green.realEstateId, realEstateMaster.id));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    query = query.orderBy(green.dt);
 
     if (offset !== undefined) {
       query = query.limit(pageSize).offset(offset);

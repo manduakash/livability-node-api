@@ -2,6 +2,44 @@ import { response } from "../utils/response.js";
 import { DgSetUsageModel } from "../models/dgSetUsage.model.js";
 import { logAudit } from "../utils/auditLog.js";
 
+/** GET /api/:portal/dg-set-usage/report?from=&to=&realEstateId=&page=0&pageSize=10 */
+export async function getDgSetUsageReport(req, res) {
+  try {
+    const { from, to, realEstateId } = req.query;
+
+    const page = req.query.page !== undefined ? Number(req.query.page) : undefined;
+    const pageSize = Number(req.query.pageSize) || 10;
+    const offset = page !== undefined ? page * pageSize : undefined;
+
+    const rows = await DgSetUsageModel.reportByDateRange({
+      fromDate: from,
+      toDate: to,
+      realEstateId: realEstateId !== undefined && realEstateId !== "all" && realEstateId !== "" ? Number(realEstateId) : 0,
+      offset,
+      pageSize,
+    });
+
+    const data = rows.map((row, index) => {
+      const year = row.dateOfDg instanceof Date 
+        ? row.dateOfDg.getFullYear() 
+        : (row.dateOfDg ? new Date(row.dateOfDg).getFullYear() : "");
+
+      return {
+        sl: (offset !== undefined ? offset : 0) + index + 1,
+        year,
+        hours: Number(row.hoursUsed) || 0,
+        electricity: `${Number(row.electricity) || 0} kWh`,
+        oil: `${Number(row.oilConsumption) || 0} L`,
+        waste: `${Number(row.wasteGenerated) || 0} kg`,
+      };
+    });
+
+    return response.success(res, "DG set usage report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch DG set usage report: ${err.message}`);
+  }
+}
+
 /** GET /api/:portal/dg-set-usage?realEstateId=1&from=&to= */
 export async function listDgSetUsage(req, res) {
   try {

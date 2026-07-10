@@ -74,6 +74,63 @@ export async function removeWasteCollection(req, res) {
   }
 }
 
+/** GET /api/:portal/waste-collection/report?from=&to=&realEstateId=&page=0&pageSize=10 */
+export async function getWasteCollectionReport(req, res) {
+  try {
+    const { from, to, realEstateId } = req.query;
+
+    const page = req.query.page !== undefined ? Number(req.query.page) : undefined;
+    const pageSize = Number(req.query.pageSize) || 10;
+    const offset = page !== undefined ? page * pageSize : undefined;
+
+    const rows = await WasteCollectionModel.reportByDateRange({
+      fromDate: from,
+      toDate: to,
+      realEstateId: realEstateId !== undefined && realEstateId !== "all" && realEstateId !== "" ? Number(realEstateId) : 0,
+      offset,
+      pageSize,
+    });
+
+    const data = await Promise.all(
+      rows.map(async (row, index) => {
+        const year = row.wasteDateCollec instanceof Date 
+          ? row.wasteDateCollec.getFullYear() 
+          : (row.wasteDateCollec ? new Date(row.wasteDateCollec).getFullYear() : "");
+
+        // Fetch waste details categories for this date & property to distribute the ULB amount
+        const matchingDetails = await WasteDetailsModel.listByDate(row.realEstateId, row.wasteDateCollec);
+        const activeCategories = matchingDetails.map(d => d.wasteName);
+
+        const count = activeCategories.length;
+        const share = count > 0 ? (row.ulb / count) : 0;
+
+        const hasSolid = activeCategories.includes("Solid Waste");
+        const hasHazardous = activeCategories.includes("Hazardous Waste");
+        const hasBio = activeCategories.includes("Bio-Medical Waste");
+        const hasPollution = activeCategories.includes("Pollution Waste");
+        const hasConstDown = activeCategories.includes("Const & Downward Waste");
+
+        return {
+          sl: (offset !== undefined ? offset : 0) + index + 1,
+          year,
+          gen: parseFloat(row.wasteGen) || 0,
+          treated: parseFloat(row.wasteTreat) || 0,
+          solid: hasSolid ? parseFloat(share.toFixed(2)) : 0,
+          hazardous: hasHazardous ? parseFloat(share.toFixed(2)) : 0,
+          bio: hasBio ? parseFloat(share.toFixed(2)) : 0,
+          pollution: hasPollution ? parseFloat(share.toFixed(2)) : 0,
+          constDown: hasConstDown ? parseFloat(share.toFixed(2)) : 0,
+          estate: row.realEstateName,
+        };
+      })
+    );
+
+    return response.success(res, "Waste collection report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch waste collection report: ${err.message}`);
+  }
+}
+
 // --- waste_details ---
 
 /** GET /api/:portal/waste-details?realEstateId=1&date=2026-06-01 */

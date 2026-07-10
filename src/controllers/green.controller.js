@@ -53,27 +53,61 @@ export async function upsertGreen(req, res) {
 }
 
 /**
- * GET /api/:portal/green/report?from=&to=&name=&stateId=&page=0&pageSize=10
+ * GET /api/:portal/green/report?from=&to=&fromYear=&toYear=&name=&nameSearch=&stateId=&page=0&pageSize=10
  * Cross-property admin reporting view.
  */
 export async function getGreenReport(req, res) {
   try {
-    const { from, to, name, stateId } = req.query;
-    if (!from || !to) return response.error(res, "from and to are required", 400);
+    const { from, to, fromYear, toYear, name, nameSearch, stateId } = req.query;
+
+    let fromDate = from;
+    let toDate = to;
+
+    if (fromYear) {
+      fromDate = `${fromYear}-01-01`;
+    }
+    if (toYear) {
+      toDate = `${toYear}-12-31`;
+    }
 
     const page = req.query.page !== undefined ? Number(req.query.page) : undefined;
     const pageSize = Number(req.query.pageSize) || 10;
+    const offset = page !== undefined ? page * pageSize : undefined;
 
     const rows = await GreenModel.reportByDateRange({
-      fromDate: from,
-      toDate: to,
-      nameSearch: name,
+      fromDate,
+      toDate,
+      nameSearch: name || nameSearch,
       stateId,
-      offset: page !== undefined ? page * pageSize : undefined,
+      offset,
       pageSize,
     });
 
-    return response.success(res, "Green report fetched", rows);
+    const data = rows.map((row, index) => {
+      const actualAreaVal = parseFloat(row.actualArea) || 0;
+      const totAreaVal = parseFloat(row.totArea) || 0;
+      const pctOfTotalArea = totAreaVal > 0 ? ((actualAreaVal / totAreaVal) * 100).toFixed(2) : "0.00";
+
+      // Formatted date string for dt (YYYY-MM-DD)
+      const dateStr = row.dt instanceof Date 
+        ? row.dt.toISOString().split('T')[0] 
+        : String(row.dt || '');
+
+      const year = row.dt instanceof Date 
+        ? row.dt.getFullYear() 
+        : (row.dt ? new Date(row.dt).getFullYear() : "");
+
+      return {
+        slNo: (offset !== undefined ? offset : 0) + index + 1,
+        year,
+        realEstateName: row.realEstateName,
+        areaUnderGreenery: `${row.actualArea}(${dateStr})`,
+        pctOfTotalArea,
+        noOfTrees: Number(row.trees) || 0,
+      };
+    });
+
+    return response.success(res, "Green report fetched successfully", data);
   } catch (err) {
     return response.error(res, `Failed to fetch green report: ${err.message}`);
   }

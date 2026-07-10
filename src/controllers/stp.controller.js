@@ -98,6 +98,49 @@ export async function removeStpReading(req, res) {
   }
 }
 
+/** GET /api/:portal/stp/report?from=&to=&realEstateId=&page=0&pageSize=10 */
+export async function getStpReport(req, res) {
+  try {
+    const { from, to, realEstateId } = req.query;
+
+    const page = req.query.page !== undefined ? Number(req.query.page) : undefined;
+    const pageSize = Number(req.query.pageSize) || 10;
+    const offset = page !== undefined ? page * pageSize : undefined;
+
+    const rows = await StpReadingModel.reportByDateRange({
+      fromDate: from,
+      toDate: to,
+      realEstateId: realEstateId !== undefined && realEstateId !== "all" && realEstateId !== "" ? Number(realEstateId) : 0,
+      offset,
+      pageSize,
+    });
+
+    const data = rows.map((row, index) => {
+      const year = row.readingDate instanceof Date 
+        ? row.readingDate.getFullYear() 
+        : (row.readingDate ? new Date(row.readingDate).getFullYear() : "");
+
+      return {
+        sl: (offset !== undefined ? offset : 0) + index + 1,
+        year,
+        inlet: parseFloat(row.inlet) || 0,
+        outlet: parseFloat(row.outlet) || 0,
+        bod: parseFloat(row.bod) || 0,
+        ph: parseFloat(row.ph) || 0,
+        tss: parseFloat(row.tss) || 0,
+        nitrogen: parseFloat(row.nitrogen) || 0,
+        cod: parseFloat(row.cod) || 0,
+        fedal: parseFloat(row.feedal) || 0,
+        coliform: parseFloat(row.coliform) || 0,
+      };
+    });
+
+    return response.success(res, "STP report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch STP report: ${err.message}`);
+  }
+}
+
 /** GET /api/:portal/stp-readings?realEstateId=1&from=2026-01-01&to=2026-06-01 */
 export async function listStpReadings(req, res) {
   try {

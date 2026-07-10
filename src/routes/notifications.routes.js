@@ -6,6 +6,7 @@ const router = Router();
 router.get("/display-board/:realEstateId", notificationsController.getDisplayBoard);
 router.put("/display-board/:realEstateId", notificationsController.upsertDisplayBoard);
 
+router.get("/autocomposter/report", notificationsController.getAutocomposterReport);
 router.get("/autocomposter/years", notificationsController.listAutocomposterYears);
 router.get("/autocomposter", notificationsController.listAutocomposter);
 router.post("/autocomposter", notificationsController.createAutocomposter);

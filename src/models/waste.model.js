@@ -1,6 +1,6 @@
 import { and, between, eq, like, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { wasteCollection, wasteDetails, wasteRelated } from "../db/schema.js";
+import { wasteCollection, wasteDetails, wasteRelated, realEstateMaster } from "../db/schema.js";
 
 /**
  * waste_collection: per-date waste generation/treatment log entries.
@@ -8,6 +8,47 @@ import { wasteCollection, wasteDetails, wasteRelated } from "../db/schema.js";
  * waste_collection_admin.php / *_pcb.php / *_real.php family.
  */
 export const WasteCollectionModel = {
+  async reportByDateRange({ fromDate, toDate, realEstateId, offset, pageSize = 10 } = {}) {
+    const conditions = [];
+
+    if (fromDate && toDate) {
+      conditions.push(between(wasteCollection.wasteDateCollec, fromDate, toDate));
+    } else if (fromDate) {
+      conditions.push(sql`${wasteCollection.wasteDateCollec} >= ${fromDate}`);
+    } else if (toDate) {
+      conditions.push(sql`${wasteCollection.wasteDateCollec} <= ${toDate}`);
+    }
+
+    if (realEstateId !== undefined && Number(realEstateId) !== 0) {
+      conditions.push(eq(wasteCollection.realEstateId, Number(realEstateId)));
+    }
+
+    let query = db
+      .select({
+        id: wasteCollection.id,
+        wasteGen: wasteCollection.wasteGen,
+        wasteTreat: wasteCollection.wasteTreat,
+        wasteDateCollec: wasteCollection.wasteDateCollec,
+        ulb: wasteCollection.ulb,
+        realEstateId: wasteCollection.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(wasteCollection)
+      .leftJoin(realEstateMaster, eq(wasteCollection.realEstateId, realEstateMaster.id));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    query = query.orderBy(wasteCollection.wasteDateCollec);
+
+    if (offset !== undefined) {
+      query = query.limit(pageSize).offset(offset);
+    }
+
+    return query;
+  },
+
   async getNextId() {
     const [row] = await db.select({ maxId: sql`MAX(${wasteCollection.id})` }).from(wasteCollection);
     return (Number(row?.maxId) || 0) + 1;

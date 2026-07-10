@@ -59,6 +59,46 @@ export const DisplayBoardModel = {
  * date-range + LIKE filtering, distinct-year listing for charts).
  */
 export const AutocomposterModel = {
+  async reportByDateRange({ fromDate, toDate, realEstateId, offset, pageSize = 10 } = {}) {
+    const conditions = [];
+
+    if (fromDate && toDate) {
+      conditions.push(between(autocomposter.dt, fromDate, toDate));
+    } else if (fromDate) {
+      conditions.push(sql`${autocomposter.dt} >= ${fromDate}`);
+    } else if (toDate) {
+      conditions.push(sql`${autocomposter.dt} <= ${toDate}`);
+    }
+
+    if (realEstateId !== undefined && Number(realEstateId) !== 0) {
+      conditions.push(eq(autocomposter.realEstateId, Number(realEstateId)));
+    }
+
+    let query = db
+      .select({
+        id: autocomposter.id,
+        dt: autocomposter.dt,
+        totCompostProduction: autocomposter.totCompostProduction,
+        totHours: autocomposter.totHours,
+        realEstateId: autocomposter.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(autocomposter)
+      .leftJoin(realEstateMaster, eq(autocomposter.realEstateId, realEstateMaster.id));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    query = query.orderBy(autocomposter.dt);
+
+    if (offset !== undefined) {
+      query = query.limit(pageSize).offset(offset);
+    }
+
+    return query;
+  },
+
   async getNextId() {
     const [row] = await db.select({ maxId: sql`MAX(${autocomposter.id})` }).from(autocomposter);
     return (Number(row?.maxId) || 0) + 1;

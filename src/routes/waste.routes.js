@@ -3,6 +3,7 @@ import * as wasteController from "../controllers/waste.controller.js";
 
 const router = Router();
 
+router.get("/waste-collection/report", wasteController.getWasteCollectionReport);
 router.get("/waste-collection", wasteController.listWasteCollection);
 router.post("/waste-collection", wasteController.createWasteCollection);
 router.delete("/waste-collection/:id", wasteController.removeWasteCollection);

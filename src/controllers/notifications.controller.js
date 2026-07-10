@@ -135,6 +135,43 @@ export async function listAutocomposter(req, res) {
   }
 }
 
+/** GET /api/:portal/autocomposter/report?from=&to=&realEstateId=&page=0&pageSize=10 */
+export async function getAutocomposterReport(req, res) {
+  try {
+    const { from, to, realEstateId } = req.query;
+
+    const page = req.query.page !== undefined ? Number(req.query.page) : undefined;
+    const pageSize = Number(req.query.pageSize) || 10;
+    const offset = page !== undefined ? page * pageSize : undefined;
+
+    const rows = await AutocomposterModel.reportByDateRange({
+      fromDate: from,
+      toDate: to,
+      realEstateId: realEstateId !== undefined && realEstateId !== "all" && realEstateId !== "" ? Number(realEstateId) : 0,
+      offset,
+      pageSize,
+    });
+
+    const data = rows.map((row, index) => {
+      const year = row.dt instanceof Date 
+        ? row.dt.getFullYear() 
+        : (row.dt ? new Date(row.dt).getFullYear() : "");
+
+      return {
+        slNo: (offset !== undefined ? offset : 0) + index + 1,
+        year,
+        totalCompostProduction: parseFloat(row.totCompostProduction) || 0,
+        totalHoursOfOperation: parseFloat(row.totHours) || 0,
+        realEstateName: row.realEstateName,
+      };
+    });
+
+    return response.success(res, "Autocomposter report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch autocomposter report: ${err.message}`);
+  }
+}
+
 /** GET /api/:portal/autocomposter/years?realEstateId=1&from=&to= */
 export async function listAutocomposterYears(req, res) {
   try {
