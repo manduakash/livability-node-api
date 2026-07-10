@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as controller from "../controllers/industryPollutionLists.controller.js";
+import { getNoiseQualityReport } from "../controllers/anms.controller.js";
 
 const router = Router();
 
@@ -17,5 +18,7 @@ router.post("/air-polution-list", controller.createAirPolution);
 
 router.get("/aqms-monitoring-aqi", controller.listAqmsMonitoringAqi);
 router.post("/aqms-monitoring-aqi", controller.createAqmsMonitoringAqi);
+router.get("/air-quality-report", controller.getAirQualityReport);
+router.get("/noise-quality-report", getNoiseQualityReport);
 
 export default router;

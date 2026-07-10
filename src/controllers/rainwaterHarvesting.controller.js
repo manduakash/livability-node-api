@@ -46,3 +46,15 @@ export async function listRainwaterHarvestingByWarranty(req, res) {
     return response.error(res, `Failed to fetch rainwater harvesting warranty records: ${err.message}`);
   }
 }
+
+export async function getRainwaterCollectionReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await RainwaterHarvestingModel.getRainwaterCollectionReport(realEstateId, from, to);
+    return response.success(res, "Rainwater collection report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch rainwater collection report: ${err.message}`);
+  }
+}

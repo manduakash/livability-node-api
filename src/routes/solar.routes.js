@@ -12,5 +12,6 @@ router.get("/solar-generation", solarController.listSolarGeneration);
 router.post("/solar-generation", solarController.createSolarGeneration);
 router.put("/solar-generation/:id", solarController.updateSolarGeneration);
 router.delete("/solar-generation/:id", solarController.removeSolarGeneration);
+router.get("/solar-generation-report", solarController.getSolarGenerationReport);
 
 export default router;

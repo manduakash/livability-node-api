@@ -1,6 +1,6 @@
 import { and, between, eq, sql, desc } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { rainwaterHarvesting } from "../db/schema.js";
+import { rainwaterHarvesting, realEstateMaster } from "../db/schema.js";
 
 /**
  * rainwater_harvesting: one config/status row per property - same
@@ -81,5 +81,60 @@ export const RainwaterHarvestingModel = {
     });
 
     return id;
+  },
+
+  async getRainwaterCollectionReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(rainwaterHarvesting.realEstateId, Number(realEstateId)));
+    }
+    // Check installDate range if specified
+    if (fromDate) {
+      conditions.push(sql`${rainwaterHarvesting.installDate} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${rainwaterHarvesting.installDate} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: rainwaterHarvesting.id,
+        realEstateId: rainwaterHarvesting.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+        installDate: rainwaterHarvesting.installDate,
+        warrantyHarvesting: rainwaterHarvesting.warrantyHarvesting,
+        capacityHarvesting: rainwaterHarvesting.capacityHarvesting,
+      })
+      .from(rainwaterHarvesting)
+      .leftJoin(realEstateMaster, eq(rainwaterHarvesting.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(rainwaterHarvesting.id));
+
+    return rows.map((r, i) => {
+      let year = "2026";
+      const dateToUse = r.installDate || r.warrantyHarvesting;
+      if (dateToUse) {
+        const dateObj = new Date(dateToUse);
+        if (!isNaN(dateObj.getTime())) {
+          year = String(dateObj.getFullYear());
+        }
+      }
+
+      const collection = r.capacityHarvesting || "0 KL";
+      const capacityPct = "100%";
+
+      return {
+        slNo: i + 1,
+        sl: i + 1,
+        realEstateId: r.realEstateId,
+        realEstateName: r.realEstateName,
+        estate: r.realEstateName,
+        year,
+        collection,
+        capacityPct,
+        capacityHarvesting: r.capacityHarvesting,
+      };
+    });
   },
 };

@@ -60,3 +60,15 @@ export async function syncAllAnms(req, res) {
 
   return response.success(res, "ANMS noise data sync completed", results);
 }
+
+export async function getNoiseQualityReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await NoiseDetailsAllModel.getNoiseQualityReport(realEstateId, from, to);
+    return response.success(res, "Noise quality report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch noise quality report: ${err.message}`);
+  }
+}

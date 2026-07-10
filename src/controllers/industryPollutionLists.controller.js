@@ -5,6 +5,7 @@ import {
   AirPolutionListModel,
 } from "../models/industryPollutionLists.model.js";
 import { AqmsMonitoringAqiModel } from "../models/aqmsMonitoringAqi.model.js";
+import { AqmsMonitoringModel } from "../models/aqmsMonitoring.model.js";
 import { logAudit } from "../utils/auditLog.js";
 
 // --- water_consumption_list ---
@@ -193,5 +194,17 @@ export async function createAqmsMonitoringAqi(req, res) {
     return response.success(res, "AQMS AQI record created", result, 201);
   } catch (err) {
     return response.error(res, `Failed to create AQMS AQI record: ${err.message}`);
+  }
+}
+
+export async function getAirQualityReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await AqmsMonitoringModel.getAirQualityReport(realEstateId, from, to);
+    return response.success(res, "Air quality report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch air quality report: ${err.message}`);
   }
 }

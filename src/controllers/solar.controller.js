@@ -149,3 +149,15 @@ export async function removeSolarGeneration(req, res) {
     return response.error(res, `Failed to delete solar generation reading: ${err.message}`);
   }
 }
+
+export async function getSolarGenerationReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await SolarGenerationModel.getSolarGenerationReport(realEstateId, from, to);
+    return response.success(res, "Solar generation report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch solar generation report: ${err.message}`);
+  }
+}

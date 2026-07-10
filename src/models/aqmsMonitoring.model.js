@@ -1,6 +1,7 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { aqmsDetail, aqmsMonitoring, aqmsMonitoringMain } from "../db/schema.js";
+import { aqmsDetail, aqmsMonitoring, aqmsMonitoringMain, realEstateMaster } from "../db/schema.js";
+
 
 /**
  * Mirrors admin/save_aqms_data_admin.php:
@@ -119,6 +120,51 @@ export const AqmsMonitoringModel = {
     });
 
     return { inserted: 1, mainId, aqi, points, remarks };
+  },
+
+  async getAirQualityReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(aqmsMonitoringMain.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${aqmsMonitoringMain.dateAqms} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${aqmsMonitoringMain.dateAqms} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: aqmsMonitoring.id,
+        realEstateId: aqmsMonitoringMain.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+        dateAqms: aqmsMonitoringMain.dateAqms,
+        timeAir: aqmsMonitoringMain.timeAir,
+        aqi: aqmsMonitoringMain.aqi,
+        pm10: aqmsMonitoring.pm10Avg,
+        pm25: aqmsMonitoring.pm25Avg,
+        sox: aqmsMonitoring.so2Avg,
+        nox: aqmsMonitoring.no2Avg,
+      })
+      .from(aqmsMonitoring)
+      .innerJoin(aqmsMonitoringMain, eq(aqmsMonitoring.mainId, aqmsMonitoringMain.id))
+      .leftJoin(realEstateMaster, eq(aqmsMonitoringMain.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(aqmsMonitoringMain.dateAqms), desc(aqmsMonitoringMain.timeAir));
+
+    return rows.map((r, i) => ({
+      slNo: i + 1,
+      realEstateId: r.realEstateId,
+      realEstateName: r.realEstateName,
+      dateTime: `${r.dateAqms} ${r.timeAir}`,
+      aqi: r.aqi,
+      pm10: r.pm10,
+      pm25: r.pm25,
+      sox: r.sox,
+      nox: r.nox,
+    }));
   },
 };
 

@@ -1,6 +1,6 @@
 import { and, between, desc, eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { portableWaterQuality, waterQuality } from "../db/schema.js";
+import { portableWaterQuality, waterQuality, realEstateMaster } from "../db/schema.js";
 
 /**
  * portable_water_quality: one config/status row per property tracking
@@ -243,5 +243,70 @@ export const WaterQualityModel = {
       .where(eq(waterQuality.realEstateId, realEstateId))
       .orderBy(desc(waterQuality.readingDate))
       .limit(limit);
-  }
+  },
+
+  async getWaterQualityReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(waterQuality.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${waterQuality.readingDate} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${waterQuality.readingDate} <= ${toDate}`);
+    }
+
+    const deviceSubquery = sql`(SELECT device FROM water_sensor_all WHERE real_estate_id = ${waterQuality.realEstateId} ORDER BY timestamp DESC LIMIT 1)`;
+
+    const rows = await db
+      .select({
+        id: waterQuality.id,
+        realEstateId: waterQuality.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+        readingDate: waterQuality.readingDate,
+        ph: waterQuality.ph,
+        tds: waterQuality.tds,
+        temp: waterQuality.temp,
+        bod: waterQuality.bod,
+        cod: waterQuality.cod,
+        tss: waterQuality.tss,
+        deviceName: deviceSubquery,
+      })
+      .from(waterQuality)
+      .leftJoin(realEstateMaster, eq(waterQuality.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(waterQuality.readingDate));
+
+    return rows.map((r, i) => {
+      let formattedDate = "";
+      if (r.readingDate) {
+        const dateObj = new Date(r.readingDate);
+        if (!isNaN(dateObj.getTime())) {
+          const d = String(dateObj.getDate()).padStart(2, '0');
+          const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const y = dateObj.getFullYear();
+          formattedDate = `${d}-${m}-${y}`;
+        }
+      }
+
+      return {
+        slNo: i + 1,
+        sl: i + 1,
+        realEstateId: r.realEstateId,
+        realEstateName: r.realEstateName,
+        estate: r.realEstateName,
+        dateTime: formattedDate,
+        device: r.deviceName || "N/A",
+        ph: r.ph,
+        tds: r.tds,
+        tss: r.tss,
+        temp: r.temp,
+        bod: r.bod,
+        cod: r.cod,
+        tsServer: r.readingDate ? new Date(r.readingDate).toISOString() : "",
+      };
+    });
+  },
 };

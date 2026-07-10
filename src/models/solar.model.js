@@ -1,6 +1,6 @@
-import { and, between, eq, like, sql, desc } from "drizzle-orm";
+import { and, between, eq, like, sql, desc, asc } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { solarEnergy, solarGeneration } from "../db/schema.js";
+import { solarEnergy, solarGeneration, realEstateMaster } from "../db/schema.js";
 
 /**
  * solar_energy: one config/status row per property for solar installation
@@ -178,5 +178,71 @@ export const SolarGenerationModel = {
       .where(eq(solarGeneration.realEstateId, realEstateId))
       .orderBy(desc(solarGeneration.dt))
       .limit(limit);
+  },
+
+  async getSolarGenerationReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(solarGeneration.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${solarGeneration.dt} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${solarGeneration.dt} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: solarGeneration.id,
+        realEstateId: solarGeneration.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+        dt: solarGeneration.dt,
+        solarReadings: solarGeneration.solarReadings,
+        capacity: solarEnergy.capacity,
+      })
+      .from(solarGeneration)
+      .leftJoin(realEstateMaster, eq(solarGeneration.realEstateId, realEstateMaster.id))
+      .leftJoin(solarEnergy, eq(solarGeneration.realEstateId, solarEnergy.realEstateId))
+      .where(and(...conditions))
+      .orderBy(asc(solarGeneration.dt));
+
+    return rows.map((r, i) => {
+      const numericReadings = parseFloat(r.solarReadings) || 0;
+      const numericCapacity = parseFloat(r.capacity) || 0;
+      let percentOfInstalledTarget = 0;
+      if (numericCapacity > 0) {
+        percentOfInstalledTarget = Number(((numericReadings / numericCapacity) * 100).toFixed(2));
+      }
+
+      let year = "";
+      let formattedDate = "";
+      if (r.dt) {
+        const dateObj = new Date(r.dt);
+        if (!isNaN(dateObj.getTime())) {
+          year = String(dateObj.getFullYear());
+          const d = String(dateObj.getDate()).padStart(2, '0');
+          const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const y = dateObj.getFullYear();
+          formattedDate = `${d}-${m}-${y}`;
+        }
+      }
+
+      return {
+        slNo: i + 1,
+        sl: i + 1,
+        realEstateId: r.realEstateId,
+        realEstateName: r.realEstateName,
+        estate: r.realEstateName,
+        year,
+        date: formattedDate,
+        totalUnitGenerated: r.solarReadings,
+        generated: r.solarReadings,
+        installedTarget: r.capacity || "0 KW",
+        percentOfInstalledTarget,
+        targetPct: percentOfInstalledTarget,
+      };
+    });
   },
 };

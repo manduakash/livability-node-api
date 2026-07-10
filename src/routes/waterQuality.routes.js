@@ -12,5 +12,6 @@ router.get("/water-quality/by-year", waterQualityController.listWaterQualityByYe
 router.get("/water-quality", waterQualityController.listWaterQuality);
 router.post("/water-quality", waterQualityController.createWaterQuality);
 router.delete("/water-quality/:id", waterQualityController.removeWaterQuality);
+router.get("/water-quality-report", waterQualityController.getWaterQualityReport);
 
 export default router;
