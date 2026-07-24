@@ -245,4 +245,83 @@ export const SolarGenerationModel = {
       };
     });
   },
+
+  async getSolarUnderProductionReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(solarGeneration.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${solarGeneration.dt} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${solarGeneration.dt} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: solarGeneration.id,
+        realEstateId: solarGeneration.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+        dt: solarGeneration.dt,
+        solarReadings: solarGeneration.solarReadings,
+        capacity: solarEnergy.capacity,
+      })
+      .from(solarGeneration)
+      .leftJoin(realEstateMaster, eq(solarGeneration.realEstateId, realEstateMaster.id))
+      .leftJoin(solarEnergy, eq(solarGeneration.realEstateId, solarEnergy.realEstateId))
+      .where(and(...conditions))
+      .orderBy(asc(solarGeneration.dt));
+
+    const groups = {};
+
+    for (const r of rows) {
+      let year = 2026;
+      if (r.dt) {
+        const dateObj = new Date(r.dt);
+        if (!isNaN(dateObj.getTime())) {
+          year = dateObj.getFullYear();
+        }
+      }
+
+      const key = `${r.realEstateId}_${year}`;
+      if (!groups[key]) {
+        groups[key] = {
+          year,
+          realEstateId: r.realEstateId,
+          realEstateName: r.realEstateName,
+          capacity: parseFloat(r.capacity) || 0,
+          totalProduction: 0,
+          daysLess: 0,
+        };
+      }
+
+      const dailyProduction = parseFloat(r.solarReadings) || 0;
+      const dailyTarget = groups[key].capacity;
+
+      groups[key].totalProduction += dailyProduction;
+
+      if (dailyProduction < dailyTarget) {
+        groups[key].daysLess++;
+      }
+    }
+
+    return Object.values(groups).map((g, i) => {
+      const annualTarget = g.capacity * 365;
+      return {
+        slNo: i + 1,
+        sl: i + 1,
+        realEstateId: g.realEstateId,
+        realEstateName: g.realEstateName,
+        estate: g.realEstateName,
+        year: g.year,
+        annualTarget: `${annualTarget.toFixed(2)} kWh`,
+        target: `${annualTarget.toFixed(2)} kWh`,
+        totalProduction: `${g.totalProduction.toFixed(2)} kWh`,
+        production: `${g.totalProduction.toFixed(2)} kWh`,
+        daysLess: g.daysLess,
+      };
+    });
+  },
 };

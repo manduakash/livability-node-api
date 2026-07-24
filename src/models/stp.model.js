@@ -1,6 +1,6 @@
-import { and, between, eq, sql } from "drizzle-orm";
+import { and, between, eq, sql, desc } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { stp, stpReading } from "../db/schema.js";
+import { stp, stpReading, realEstateMaster } from "../db/schema.js";
 
 /**
  * stp: one config/status row per property for the Sewage Treatment Plant
@@ -225,5 +225,97 @@ export const StpReadingModel = {
       })
       .from(stpReading)
       .where(conditions);
+  },
+
+  async getStpPoorQualityReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(stpReading.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${stpReading.readingDate} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${stpReading.readingDate} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: stpReading.id,
+        ph: stpReading.ph,
+        bod: stpReading.bod,
+        cod: stpReading.cod,
+        tss: stpReading.tss,
+        nitrogen: stpReading.nitrogen,
+        coliform: stpReading.coliform,
+        readingDate: stpReading.readingDate,
+        realEstateId: stpReading.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(stpReading)
+      .leftJoin(realEstateMaster, eq(stpReading.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(stpReading.readingDate));
+
+    const groups = {};
+
+    for (const r of rows) {
+      let year = 2026;
+      if (r.readingDate) {
+        const dateObj = new Date(r.readingDate);
+        if (!isNaN(dateObj.getTime())) {
+          year = dateObj.getFullYear();
+        }
+      }
+
+      const key = `${r.realEstateId}_${year}`;
+      if (!groups[key]) {
+        groups[key] = {
+          year,
+          realEstateId: r.realEstateId,
+          realEstateName: r.realEstateName,
+          daysPoor: 0,
+          poorParamsList: new Set(),
+        };
+      }
+
+      const phVal = parseFloat(r.ph);
+      const bodVal = parseFloat(r.bod);
+      const codVal = parseFloat(r.cod);
+      const tssVal = parseFloat(r.tss);
+      const nitrogenVal = parseFloat(r.nitrogen);
+      const coliformVal = parseFloat(r.coliform);
+
+      const poorParams = [];
+      if (!isNaN(phVal) && (phVal < 6.5 || phVal > 9.0)) poorParams.push("pH");
+      if (!isNaN(bodVal) && bodVal > 10) poorParams.push("BOD");
+      if (!isNaN(codVal) && codVal > 50) poorParams.push("COD");
+      if (!isNaN(tssVal) && tssVal > 10) poorParams.push("TSS");
+      if (!isNaN(nitrogenVal) && nitrogenVal > 10) poorParams.push("Nitrogen");
+      if (!isNaN(coliformVal) && coliformVal > 230) poorParams.push("Fecal Coliform");
+
+      if (poorParams.length > 0) {
+        groups[key].daysPoor++;
+        poorParams.forEach((p) => groups[key].poorParamsList.add(p));
+      }
+    }
+
+    return Object.values(groups).map((g, i) => {
+      const paramsJoined = g.poorParamsList.size > 0 
+        ? Array.from(g.poorParamsList).join(", ") 
+        : "None";
+      return {
+        slNo: i + 1,
+        sl: i + 1,
+        realEstateId: g.realEstateId,
+        realEstateName: g.realEstateName,
+        estate: g.realEstateName,
+        year: g.year,
+        daysPoor: g.daysPoor,
+        params: paramsJoined,
+        poorParams: paramsJoined,
+      };
+    });
   },
 };

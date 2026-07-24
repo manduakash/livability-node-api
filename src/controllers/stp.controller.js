@@ -141,6 +141,18 @@ export async function getStpReport(req, res) {
   }
 }
 
+export async function getStpPoorQualityReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await StpReadingModel.getStpPoorQualityReport(realEstateId, from, to);
+    return response.success(res, "STP poor quality report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch STP poor quality report: ${err.message}`);
+  }
+}
+
 /** GET /api/:portal/stp-readings?realEstateId=1&from=2026-01-01&to=2026-06-01 */
 export async function listStpReadings(req, res) {
   try {

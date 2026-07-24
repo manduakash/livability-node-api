@@ -137,3 +137,15 @@ export async function getGreenActiveReport(req, res) {
     return response.error(res, `Failed to fetch active properties green report: ${err.message}`);
   }
 }
+
+export async function getGreeneryNonComplianceReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await GreenModel.getGreeneryNonComplianceReport(realEstateId, from, to);
+    return response.success(res, "Greenery non-compliance report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch greenery non-compliance report: ${err.message}`);
+  }
+}

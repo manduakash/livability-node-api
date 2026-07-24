@@ -309,4 +309,93 @@ export const WaterQualityModel = {
       };
     });
   },
+
+  async getWaterQualityExceedanceReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(waterQuality.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${waterQuality.readingDate} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${waterQuality.readingDate} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: waterQuality.id,
+        realEstateId: waterQuality.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+        readingDate: waterQuality.readingDate,
+        ph: waterQuality.ph,
+        tds: waterQuality.tds,
+        tss: waterQuality.tss,
+        bod: waterQuality.bod,
+        cod: waterQuality.cod,
+      })
+      .from(waterQuality)
+      .leftJoin(realEstateMaster, eq(waterQuality.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(waterQuality.readingDate));
+
+    const groups = {};
+
+    for (const r of rows) {
+      let year = 2026;
+      if (r.readingDate) {
+        const dateObj = new Date(r.readingDate);
+        if (!isNaN(dateObj.getTime())) {
+          year = dateObj.getFullYear();
+        }
+      }
+
+      const key = `${r.realEstateId}_${year}`;
+      if (!groups[key]) {
+        groups[key] = {
+          year,
+          realEstateId: r.realEstateId,
+          realEstateName: r.realEstateName,
+          daysPoor: 0,
+          poorParamsList: new Set(),
+        };
+      }
+
+      const phVal = parseFloat(r.ph);
+      const tdsVal = parseFloat(r.tds);
+      const tssVal = parseFloat(r.tss);
+      const bodVal = parseFloat(r.bod);
+      const codVal = parseFloat(r.cod);
+
+      const poorParams = [];
+      if (!isNaN(phVal) && (phVal < 6.5 || phVal > 8.5)) poorParams.push("pH");
+      if (!isNaN(tdsVal) && tdsVal > 500) poorParams.push("TDS");
+      if (!isNaN(tssVal) && tssVal > 10) poorParams.push("TSS");
+      if (!isNaN(bodVal) && bodVal > 3) poorParams.push("BOD");
+      if (!isNaN(codVal) && codVal > 50) poorParams.push("COD");
+
+      if (poorParams.length > 0) {
+        groups[key].daysPoor++;
+        poorParams.forEach((p) => groups[key].poorParamsList.add(p));
+      }
+    }
+
+    return Object.values(groups).map((g, i) => {
+      const paramsJoined = g.poorParamsList.size > 0 
+        ? Array.from(g.poorParamsList).join(", ") 
+        : "None";
+      return {
+        slNo: i + 1,
+        sl: i + 1,
+        realEstateId: g.realEstateId,
+        realEstateName: g.realEstateName,
+        estate: g.realEstateName,
+        year: g.year,
+        daysPoor: g.daysPoor,
+        params: paramsJoined,
+        poorParams: paramsJoined,
+      };
+    });
+  },
 };

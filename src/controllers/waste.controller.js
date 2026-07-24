@@ -1,5 +1,5 @@
 import { response } from "../utils/response.js";
-import { WasteCollectionModel, WasteDetailsModel, WasteRelatedModel } from "../models/waste.model.js";
+import { WasteCollectionModel, WasteDetailsModel, WasteRelatedModel, WasteNonSegregationReportModel } from "../models/waste.model.js";
 import { logAudit } from "../utils/auditLog.js";
 
 // --- waste_collection ---
@@ -271,5 +271,17 @@ export async function upsertWasteRelated(req, res) {
     return response.success(res, "Waste-related config saved", { id });
   } catch (err) {
     return response.error(res, `Failed to save waste-related config: ${err.message}`);
+  }
+}
+
+export async function getWasteNonSegregationReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await WasteNonSegregationReportModel.getWasteNonSegregationReport(realEstateId, from, to);
+    return response.success(res, "Waste non-segregation report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch waste non-segregation report: ${err.message}`);
   }
 }

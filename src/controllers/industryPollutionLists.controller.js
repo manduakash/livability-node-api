@@ -248,3 +248,15 @@ export async function getAirQualityReport(req, res) {
     return response.error(res, `Failed to fetch air quality report: ${err.message}`);
   }
 }
+
+export async function getAirQualityExceedanceReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await AqmsMonitoringModel.getAirQualityExceedanceReport(realEstateId, from, to);
+    return response.success(res, "Air quality exceedance report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch air quality exceedance report: ${err.message}`);
+  }
+}

@@ -1,4 +1,4 @@
-import { and, between, eq, like, sql } from "drizzle-orm";
+import { and, between, eq, like, sql, desc } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { wasteCollection, wasteDetails, wasteRelated, realEstateMaster } from "../db/schema.js";
 
@@ -263,4 +263,73 @@ export const WasteRelatedModel = {
 
     return id;
   },
+};
+
+export const WasteNonSegregationReportModel = {
+  async getWasteNonSegregationReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(wasteCollection.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${wasteCollection.wasteDateCollec} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${wasteCollection.wasteDateCollec} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: wasteCollection.id,
+        wasteGen: wasteCollection.wasteGen,
+        wasteTreat: wasteCollection.wasteTreat,
+        wasteDateCollec: wasteCollection.wasteDateCollec,
+        realEstateId: wasteCollection.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(wasteCollection)
+      .leftJoin(realEstateMaster, eq(wasteCollection.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(wasteCollection.wasteDateCollec));
+
+    const groups = {};
+
+    for (const r of rows) {
+      let year = 2026;
+      if (r.wasteDateCollec) {
+        const dateObj = new Date(r.wasteDateCollec);
+        if (!isNaN(dateObj.getTime())) {
+          year = dateObj.getFullYear();
+        }
+      }
+
+      const key = `${r.realEstateId}_${year}`;
+      if (!groups[key]) {
+        groups[key] = {
+          year,
+          realEstateId: r.realEstateId,
+          realEstateName: r.realEstateName,
+          daysNonSeg: 0,
+        };
+      }
+
+      const gen = parseFloat(r.wasteGen) || 0;
+      const treat = parseFloat(r.wasteTreat) || 0;
+
+      if (treat < gen) {
+        groups[key].daysNonSeg++;
+      }
+    }
+
+    return Object.values(groups).map((g, i) => ({
+      slNo: i + 1,
+      sl: i + 1,
+      realEstateId: g.realEstateId,
+      realEstateName: g.realEstateName,
+      estate: g.realEstateName,
+      year: g.year,
+      daysNonSeg: g.daysNonSeg,
+    }));
+  }
 };

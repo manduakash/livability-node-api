@@ -72,3 +72,15 @@ export async function getNoiseQualityReport(req, res) {
     return response.error(res, `Failed to fetch noise quality report: ${err.message}`);
   }
 }
+
+export async function getNoiseQualityExceedanceReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await NoiseDetailsAllModel.getNoiseQualityExceedanceReport(realEstateId, from, to);
+    return response.success(res, "Noise quality exceedance report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch noise quality exceedance report: ${err.message}`);
+  }
+}

@@ -181,3 +181,15 @@ export async function getWaterQualityReport(req, res) {
     return response.error(res, `Failed to fetch water quality report: ${err.message}`);
   }
 }
+
+export async function getWaterQualityExceedanceReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await WaterQualityModel.getWaterQualityExceedanceReport(realEstateId, from, to);
+    return response.success(res, "Water quality exceedance report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch water quality exceedance report: ${err.message}`);
+  }
+}

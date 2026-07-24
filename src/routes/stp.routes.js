@@ -4,6 +4,7 @@ import * as stpController from "../controllers/stp.controller.js";
 const router = Router();
 
 router.get("/stp/report", stpController.getStpReport);
+router.get("/stp/poorquality-report", stpController.getStpPoorQualityReport);
 router.get("/stp/:realEstateId", stpController.getStp);
 router.put("/stp/:realEstateId", stpController.upsertStp);
 

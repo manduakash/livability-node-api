@@ -198,6 +198,73 @@ export const AutocomposterModel = {
       );
     return rows.map((r) => r.dt);
   },
+
+  async getAutocomposterNonFunctioningReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(autocomposter.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${autocomposter.dt} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${autocomposter.dt} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: autocomposter.id,
+        dt: autocomposter.dt,
+        totCompostProduction: autocomposter.totCompostProduction,
+        totHours: autocomposter.totHours,
+        realEstateId: autocomposter.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(autocomposter)
+      .leftJoin(realEstateMaster, eq(autocomposter.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(autocomposter.dt));
+
+    const groups = {};
+
+    for (const r of rows) {
+      let year = 2026;
+      if (r.dt) {
+        const dateObj = new Date(r.dt);
+        if (!isNaN(dateObj.getTime())) {
+          year = dateObj.getFullYear();
+        }
+      }
+
+      const key = `${r.realEstateId}_${year}`;
+      if (!groups[key]) {
+        groups[key] = {
+          year,
+          realEstateId: r.realEstateId,
+          realEstateName: r.realEstateName,
+          daysNotUsed: 0,
+        };
+      }
+
+      const production = parseFloat(r.totCompostProduction) || 0;
+      const hours = Number(r.totHours) || 0;
+
+      if (production === 0 || hours === 0) {
+        groups[key].daysNotUsed++;
+      }
+    }
+
+    return Object.values(groups).map((g, i) => ({
+      slNo: i + 1,
+      sl: i + 1,
+      realEstateId: g.realEstateId,
+      realEstateName: g.realEstateName,
+      estate: g.realEstateName,
+      year: g.year,
+      daysNotUsed: g.daysNotUsed,
+    }));
+  },
 };
 
 /**

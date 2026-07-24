@@ -172,6 +172,18 @@ export async function getAutocomposterReport(req, res) {
   }
 }
 
+export async function getAutocomposterNonFunctioningReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await AutocomposterModel.getAutocomposterNonFunctioningReport(realEstateId, from, to);
+    return response.success(res, "Autocomposter non-functioning report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch autocomposter non-functioning report: ${err.message}`);
+  }
+}
+
 /** GET /api/:portal/autocomposter/years?realEstateId=1&from=&to= */
 export async function listAutocomposterYears(req, res) {
   try {

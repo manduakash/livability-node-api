@@ -180,4 +180,64 @@ export const GreenModel = {
       .limit(pageSize)
       .offset(offset);
   },
+
+  async getGreeneryNonComplianceReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(green.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${green.dt} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${green.dt} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: green.id,
+        totArea: green.totArea,
+        mandatedArea: green.mandatedArea,
+        actualArea: green.actualArea,
+        trees: green.trees,
+        actualTrees: green.actualTrees,
+        dt: green.dt,
+        realEstateId: green.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+      })
+      .from(green)
+      .leftJoin(realEstateMaster, eq(green.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(green.dt));
+
+    const result = [];
+    let slNo = 1;
+
+    for (const r of rows) {
+      const actArea = parseFloat(r.actualArea) || 0;
+      const mandArea = parseFloat(r.mandatedArea) || 0;
+      const actTrees = parseFloat(r.actualTrees) || 0;
+      const mandTrees = parseFloat(r.trees) || 0;
+
+      if (actArea < mandArea || actTrees < mandTrees) {
+        result.push({
+          slNo,
+          sl: slNo,
+          realEstateId: r.realEstateId,
+          realEstateName: r.realEstateName,
+          estate: r.realEstateName,
+          totalArea: r.totArea,
+          greenArea: r.actualArea,
+          mandatedArea: r.mandatedArea,
+          treesToPlant: r.trees,
+          actualTrees: r.actualTrees,
+          date: r.dt,
+        });
+        slNo++;
+      }
+    }
+
+    return result;
+  },
 };

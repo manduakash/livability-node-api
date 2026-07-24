@@ -186,4 +186,80 @@ export const NoiseDetailsAllModel = {
       };
     });
   },
+
+  async getNoiseQualityExceedanceReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(noiseDetailsAll.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`DATE(${noiseDetailsAll.timeS}) >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`DATE(${noiseDetailsAll.timeS}) <= ${toDate}`);
+    }
+
+    const noiseAvgFormula = sql`(${noiseDetailsAll.las} + ${noiseDetailsAll.lcs} + ${noiseDetailsAll.lzs} + ${noiseDetailsAll.laeqt} + ${noiseDetailsAll.lapeakt} + ${noiseDetailsAll.lceqt} + ${noiseDetailsAll.lcpeakt} + ${noiseDetailsAll.lzeqt} + ${noiseDetailsAll.lzpeakt}) / 9`;
+
+    const rows = await db
+      .select({
+        id: noiseDetailsAll.id,
+        realEstateId: noiseDetailsAll.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+        timeS: noiseDetailsAll.timeS,
+        noiseVal: noiseAvgFormula,
+      })
+      .from(noiseDetailsAll)
+      .leftJoin(realEstateMaster, eq(noiseDetailsAll.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(noiseDetailsAll.timeS));
+
+    const result = [];
+    let slNo = 1;
+
+    for (const r of rows) {
+      let formattedDateTime = "";
+      let hour = 12;
+      if (r.timeS) {
+        const str = String(r.timeS);
+        const match = str.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+        if (match) {
+          const [_, y, m, d, hh, mm, ss] = match;
+          formattedDateTime = `${d}-${m}-${y} ${hh}:${mm}:${ss}`;
+          hour = Number(hh);
+        } else {
+          const dateObj = new Date(str);
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const year = dateObj.getFullYear();
+          const hours = String(dateObj.getHours()).padStart(2, '0');
+          const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+          const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+          formattedDateTime = `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+          hour = dateObj.getHours();
+        }
+      }
+
+      const isDay = hour >= 6 && hour < 22;
+      const noiseValue = Math.round(Number(r.noiseVal) || 0);
+      const threshold = isDay ? 55 : 45;
+
+      if (noiseValue > threshold) {
+        result.push({
+          slNo,
+          sl: slNo,
+          realEstateId: r.realEstateId,
+          realEstateName: r.realEstateName,
+          estate: r.realEstateName,
+          dateTime: formattedDateTime,
+          noiseLevel: noiseValue,
+          noise: noiseValue,
+        });
+        slNo++;
+      }
+    }
+
+    return result;
+  },
 };

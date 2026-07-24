@@ -166,6 +166,67 @@ export const AqmsMonitoringModel = {
       nox: r.nox,
     }));
   },
+
+  async getAirQualityExceedanceReport(realEstateId, fromDate, toDate) {
+    const conditions = [];
+
+    if (Number(realEstateId) !== 0) {
+      conditions.push(eq(aqmsMonitoringMain.realEstateId, Number(realEstateId)));
+    }
+    if (fromDate) {
+      conditions.push(sql`${aqmsMonitoringMain.dateAqms} >= ${fromDate}`);
+    }
+    if (toDate) {
+      conditions.push(sql`${aqmsMonitoringMain.dateAqms} <= ${toDate}`);
+    }
+
+    const rows = await db
+      .select({
+        id: aqmsMonitoring.id,
+        realEstateId: aqmsMonitoringMain.realEstateId,
+        realEstateName: realEstateMaster.realEstateName,
+        dateAqms: aqmsMonitoringMain.dateAqms,
+        timeAir: aqmsMonitoringMain.timeAir,
+        aqi: aqmsMonitoringMain.aqi,
+        pm10: aqmsMonitoring.pm10Avg,
+        pm25: aqmsMonitoring.pm25Avg,
+        sox: aqmsMonitoring.so2Avg,
+        nox: aqmsMonitoring.no2Avg,
+      })
+      .from(aqmsMonitoring)
+      .innerJoin(aqmsMonitoringMain, eq(aqmsMonitoring.mainId, aqmsMonitoringMain.id))
+      .leftJoin(realEstateMaster, eq(aqmsMonitoringMain.realEstateId, realEstateMaster.id))
+      .where(and(...conditions))
+      .orderBy(desc(aqmsMonitoringMain.dateAqms), desc(aqmsMonitoringMain.timeAir));
+
+    const result = [];
+    let countIndex = 1;
+
+    for (const r of rows) {
+      let exceedenceCount = 0;
+      if (r.pm25 > 60) exceedenceCount++;
+      if (r.pm10 > 100) exceedenceCount++;
+      if (r.sox > 80) exceedenceCount++;
+      if (r.nox > 80) exceedenceCount++;
+
+      if (exceedenceCount > 0 || r.aqi > 100) {
+        result.push({
+          slNo: countIndex,
+          sl: countIndex,
+          realEstateId: r.realEstateId,
+          realEstateName: r.realEstateName,
+          estate: r.realEstateName,
+          dateTime: `${r.dateAqms} ${r.timeAir}`,
+          aqi: r.aqi,
+          exceedenceCount: exceedenceCount || 1,
+          count: exceedenceCount || 1,
+        });
+        countIndex++;
+      }
+    }
+
+    return result;
+  },
 };
 
 function num(v) {

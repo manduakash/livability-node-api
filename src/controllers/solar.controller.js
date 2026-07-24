@@ -161,3 +161,15 @@ export async function getSolarGenerationReport(req, res) {
     return response.error(res, `Failed to fetch solar generation report: ${err.message}`);
   }
 }
+
+export async function getSolarUnderProductionReport(req, res) {
+  try {
+    const realEstateId = req.query.realEstateId !== undefined && req.query.realEstateId !== "" ? Number(req.query.realEstateId) : 0;
+    const { from, to } = req.query;
+
+    const data = await SolarGenerationModel.getSolarUnderProductionReport(realEstateId, from, to);
+    return response.success(res, "Solar under-production report fetched successfully", data);
+  } catch (err) {
+    return response.error(res, `Failed to fetch solar under-production report: ${err.message}`);
+  }
+}
